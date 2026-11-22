@@ -1,0 +1,3503 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>백합온실 - MediaWiki XML 아카이브 뷰어</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Pretendard / Noto Sans KR / JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans KR"', 'Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            greenhouse: {
+              50: '#f2f9f5',
+              100: '#e1f2e8',
+              200: '#c4e4d2',
+              300: '#98cfb2',
+              400: '#65b38c',
+              500: '#42966e',
+              600: '#307957',
+              700: '#276047',
+              800: '#214d3a',
+              900: '#1c4031',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 커스텀 스크롤바 및 위키 문서 타이포그래피 */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* 렌더링된 위키 본문 스타일 */
+    .wiki-content h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 2px solid #98cfb2;
+      padding-bottom: 0.4rem;
+      margin-top: 1.75rem;
+      margin-bottom: 1rem;
+    }
+    .wiki-content h2 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #1e293b;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 0.35rem;
+      margin-top: 1.6rem;
+      margin-bottom: 0.85rem;
+    }
+    .wiki-content h3 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #276047;
+      border-bottom: 1px dashed #e2e8f0;
+      padding-bottom: 0.25rem;
+      margin-top: 1.4rem;
+      margin-bottom: 0.7rem;
+    }
+    .wiki-content h4 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 1.15rem;
+      margin-bottom: 0.5rem;
+    }
+    .wiki-content p {
+      line-height: 1.75;
+      margin-bottom: 0.85rem;
+      color: #334155;
+      word-break: keep-all;
+    }
+    .wiki-content ul {
+      list-style-type: disc;
+      padding-left: 1.5rem;
+      margin-bottom: 1rem;
+      color: #334155;
+    }
+    .wiki-content li {
+      margin-bottom: 0.35rem;
+      line-height: 1.65;
+    }
+    .wiki-link {
+      color: #276047;
+      font-weight: 500;
+      text-decoration: none;
+      border-bottom: 1px solid #98cfb2;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .wiki-link:hover {
+      background-color: #e1f2e8;
+      color: #1c4031;
+    }
+    .wiki-link-missing {
+      color: #b91c1c;
+      border-bottom: 1px dashed #fca5a5;
+      cursor: pointer;
+    }
+    .wiki-link-missing:hover {
+      background-color: #fef2f2;
+    }
+    .wiki-ext-link {
+      color: #0284c7;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      word-break: break-all;
+    }
+    .wiki-ext-link:hover {
+      color: #0369a1;
+    }
+    .wiki-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0;
+      font-size: 0.9rem;
+      background: #ffffff;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .wiki-table th {
+      background-color: #f2f9f5;
+      color: #214d3a;
+      font-weight: 600;
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid #c4e4d2;
+    }
+    .wiki-table td {
+      padding: 0.6rem 0.85rem;
+      border: 1px solid #e2e8f0;
+      color: #334155;
+      vertical-align: top;
+    }
+    .wiki-table tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+    .wiki-ref-sup {
+      font-size: 0.75rem;
+      color: #307957;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0 2px;
+    }
+    .wiki-ref-sup:hover {
+      text-decoration: underline;
+    }
+    .wiki-code {
+      background-color: #f1f5f9;
+      color: #0f172a;
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.25rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85em;
+      border: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen flex flex-col overflow-hidden">
+
+  <!-- 상단 헤더 바 -->
+  <header class="bg-white border-b border-greenhouse-200 px-4 py-3 flex items-center justify-between gap-3 shrink-0 z-20 shadow-sm">
+    <div class="flex items-center gap-3 min-w-0">
+      <!-- 모바일 사이드바 토글 버튼 -->
+      <button id="mobileMenuBtn" class="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-greenhouse-50 hover:text-greenhouse-700 focus:outline-none" aria-label="문서 목록 열기">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      <!-- 로고 및 위키 타이틀 -->
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-greenhouse-500 to-greenhouse-700 flex items-center justify-center text-white shadow-sm shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h1 id="headerSiteName" class="text-lg font-bold text-slate-900 truncate">백합온실</h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-greenhouse-100 text-greenhouse-800">
+              XML 아카이브 뷰어
+            </span>
+          </div>
+          <p id="headerSiteMeta" class="text-xs text-slate-500 truncate">MediaWiki 1.31.0 · 로컬 브라우저 렌더링</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 우측 액션 버튼: XML 파일 업로드 & 샘플 복원 -->
+    <div class="flex items-center gap-2 shrink-0">
+      <button id="resetSampleBtn" class="hidden px-3 py-2 rounded-lg text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors" title="기본 내장 샘플 데이터로 돌아가기">
+        기본 데이터 복원
+      </button>
+      <label for="xmlFileInput" class="cursor-pointer inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-greenhouse-600 hover:bg-greenhouse-700 active:bg-greenhouse-800 shadow-sm transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        <span>XML 파일 열기</span>
+      </label>
+      <input type="file" id="xmlFileInput" accept=".xml,text/xml" class="hidden" />
+    </div>
+  </header>
+
+  <!-- 알림 토스트 메시지 영역 (alert 대체) -->
+  <div id="toastBanner" class="hidden fixed bottom-5 right-5 z-50 max-w-sm bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 transition-opacity">
+    <span id="toastIcon" class="text-greenhouse-400">●</span>
+    <span id="toastText">메시지</span>
+  </div>
+
+  <!-- 메인 컨테이너 (사이드바 + 본문) -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- 모바일 사이드바 백드롭 -->
+    <div id="sidebarBackdrop" class="hidden fixed inset-0 bg-slate-900/40 z-20 lg:hidden"></div>
+
+    <!-- 좌측 사이드바 -->
+    <aside id="sidebar" class="fixed lg:static inset-y-0 left-0 z-30 w-80 bg-white border-r border-slate-200 flex flex-col transform -translate-x-full lg:translate-x-0 transition-transform duration-200 ease-in-out">
+      
+      <!-- 사이트 통계 카드 -->
+      <div class="p-3.5 bg-greenhouse-50/70 border-b border-greenhouse-100">
+        <div class="flex items-center justify-between text-xs text-greenhouse-800 mb-1.5">
+          <span class="font-semibold flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            위키 덤프 요약
+          </span>
+          <span id="siteDbName" class="font-mono text-[11px] bg-white px-1.5 py-0.5 rounded border border-greenhouse-200">yurihouse_mediawiki</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 mt-2">
+          <div class="bg-white rounded-lg p-2 border border-greenhouse-100 text-center">
+            <div class="text-[11px] text-slate-500">수록 문서</div>
+            <div id="statPageCount" class="text-base font-bold text-greenhouse-700">0</div>
+          </div>
+          <div class="bg-white rounded-lg p-2 border border-greenhouse-100 text-center">
+            <div class="text-[11px] text-slate-500">총 리비전(판)</div>
+            <div id="statRevCount" class="text-base font-bold text-greenhouse-700">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 검색 및 정렬 필터 -->
+      <div class="p-3 border-b border-slate-200 space-y-2">
+        <div class="relative">
+          <input type="text" id="searchInput" placeholder="문서 제목 또는 본문 검색..." class="w-full pl-9 pr-8 py-2 text-sm bg-slate-100 border border-transparent focus:bg-white focus:border-greenhouse-500 rounded-xl outline-none transition-all" />
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <button id="clearSearchBtn" class="hidden absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="flex items-center justify-between text-xs text-slate-500 px-1">
+          <span id="filteredCountLabel">전체 0개 문서</span>
+          <select id="sortSelect" class="bg-transparent font-medium text-slate-700 focus:outline-none cursor-pointer">
+            <option value="default">XML 순서</option>
+            <option value="title">가나다순</option>
+            <option value="revisions">편집 많은순</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 문서 목록 스크롤 영역 -->
+      <nav id="pageList" class="flex-1 overflow-y-auto p-2 space-y-1">
+        <!-- JS로 동적 생성 -->
+      </nav>
+
+      <!-- 드래그 앤 드롭 안내 푸터 -->
+      <div id="dropZoneSidebar" class="p-3 m-2.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-greenhouse-400 bg-slate-50 text-center transition-colors cursor-pointer">
+        <p class="text-xs text-slate-500">전체 <span class="font-mono font-semibold text-slate-700">document.xml</span> 파일을<br>이곳에 끌어다 놓아 열기</p>
+      </div>
+    </aside>
+
+    <!-- 우측 메인 콘텐츠 영역 -->
+    <main id="mainScrollArea" class="flex-1 overflow-y-auto bg-slate-50/60">
+      <div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- 문서 헤더 카드 -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 mb-5">
+          <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-2">
+            <span id="pageNamespaceBadge" class="px-2 py-0.5 rounded-md bg-greenhouse-100 text-greenhouse-800 font-semibold">일반 문서 (ns:0)</span>
+            <span id="pageIdBadge" class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 font-mono">ID: -</span>
+            <span id="redirectBadge" class="hidden px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-medium">넘겨주기 문서</span>
+          </div>
+
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 id="articleTitle" class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight break-words">
+              문서를 선택해주세요
+            </h2>
+
+            <!-- 뷰 모드 전환 탭 -->
+            <div class="inline-flex p-1 rounded-xl bg-slate-100 border border-slate-200 self-start shrink-0">
+              <button data-tab="rendered" class="tab-btn active px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-greenhouse-700 shadow-sm">
+                위키 보기
+              </button>
+              <button data-tab="source" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900">
+                위키텍스트 원문
+              </button>
+              <button data-tab="history" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 hover:text-slate-900">
+                역사 (<span id="tabRevCount">0</span>)
+              </button>
+            </div>
+          </div>
+
+          <!-- 리비전(판) 선택 및 메타데이터 바 -->
+          <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+              <label for="revisionSelect" class="text-xs font-semibold text-slate-500 shrink-0">판 선택:</label>
+              <select id="revisionSelect" class="w-full max-w-md text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-medium focus:outline-none focus:border-greenhouse-500">
+                <!-- JS 동적 옵션 -->
+              </select>
+            </div>
+
+            <div id="revisionMeta" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+              <span id="metaContributor" class="flex items-center gap-1 font-medium text-slate-700">
+                <svg class="w-3.5 h-3.5 text-greenhouse-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                -
+              </span>
+              <span>·</span>
+              <span id="metaTimestamp">-</span>
+              <span>·</span>
+              <span id="metaBytes" class="font-mono">- bytes</span>
+            </div>
+          </div>
+
+          <!-- 편집 요약(Comment) 표시줄 -->
+          <div id="metaCommentBox" class="hidden mt-3 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200/80 text-xs text-slate-600 flex items-start gap-2">
+            <span class="font-semibold text-slate-500 shrink-0">편집 요약:</span>
+            <span id="metaCommentText" class="italic"></span>
+          </div>
+        </div>
+
+        <!-- 탭 1: 렌더링된 위키 본문 -->
+        <article id="viewRendered" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-8">
+          <div id="renderedBody" class="wiki-content">
+            <!-- 파싱된 HTML 출력 -->
+          </div>
+        </article>
+
+        <!-- 탭 2: 위키텍스트 원문 보기 -->
+        <section id="viewSource" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="bg-slate-800 text-slate-200 px-4 py-2.5 flex items-center justify-between text-xs">
+            <span class="font-mono">wikitext (text/x-wiki)</span>
+            <button id="copySourceBtn" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-700 hover:bg-slate-600 text-white font-medium transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              <span>원문 복사</span>
+            </button>
+          </div>
+          <pre id="rawSourceText" class="p-4 sm:p-6 text-xs sm:text-sm font-mono text-slate-800 bg-slate-50 overflow-x-auto whitespace-pre-wrap leading-relaxed"></pre>
+        </section>
+
+        <!-- 탭 3: 문서 편집 역사(Revision History) -->
+        <section id="viewHistory" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-bold text-slate-900">문서 편집 역사</h3>
+            <span class="text-xs text-slate-500">클릭하면 해당 판의 내용을 열람합니다</span>
+          </div>
+          <div id="historyList" class="space-y-2.5">
+            <!-- JS로 동적 생성 -->
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- 전체 화면 드래그 오버레이 -->
+  <div id="globalDropOverlay" class="hidden fixed inset-0 z-50 bg-greenhouse-900/75 backdrop-blur-sm flex items-center justify-center p-6 pointer-events-none">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border-4 border-dashed border-greenhouse-400">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-greenhouse-100 text-greenhouse-600 flex items-center justify-center">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+      </div>
+      <h3 class="text-xl font-bold text-slate-900 mb-1">MediaWiki XML 파일 놓기</h3>
+      <p class="text-sm text-slate-500">파일을 놓으면 브라우저에서 즉시 파싱하여 보여드립니다.</p>
+    </div>
+  </div>
+
+  <!-- 내장된 백합온실 MediaWiki XML 샘플 데이터 -->
+  <script id="embedded-mediawiki-xml" type="application/xml">
+<mediawiki xmlns="http://www.mediawiki.org/xml/export-0.10/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.10/ http://www.mediawiki.org/xml/export-0.10.xsd" version="0.10" xml:lang="ko">
+ <siteinfo>
+ <sitename>백합온실</sitename>
+ <dbname>yurihouse_mediawiki</dbname>
+ <base>https://yurihouse.wiki/wiki/%EB%B0%B1%ED%95%A9%EC%98%A8%EC%8B%A4:%EB%8C%80%EB%AC%B8</base>
+ <generator>MediaWiki 1.31.0</generator>
+ <case>first-letter</case>
+ <namespaces>
+ <namespace key="-2" case="first-letter">미디어</namespace>
+ <namespace key="-1" case="first-letter">특수</namespace>
+ <namespace key="0" case="first-letter" />
+ <namespace key="1" case="first-letter">토론</namespace>
+ <namespace key="2" case="first-letter">사용자</namespace>
+ <namespace key="3" case="first-letter">사용자토론</namespace>
+ <namespace key="4" case="first-letter">백합온실</namespace>
+ <namespace key="5" case="first-letter">백합온실토론</namespace>
+ <namespace key="6" case="first-letter">파일</namespace>
+ <namespace key="7" case="first-letter">파일토론</namespace>
+ <namespace key="8" case="first-letter">미디어위키</namespace>
+ <namespace key="9" case="first-letter">미디어위키토론</namespace>
+ <namespace key="10" case="first-letter">틀</namespace>
+ <namespace key="11" case="first-letter">틀토론</namespace>
+ <namespace key="12" case="first-letter">도움말</namespace>
+ <namespace key="13" case="first-letter">도움말토론</namespace>
+ <namespace key="14" case="first-letter">분류</namespace>
+ <namespace key="15" case="first-letter">분류토론</namespace>
+ <namespace key="828" case="first-letter">모듈</namespace>
+ <namespace key="829" case="first-letter">모듈토론</namespace>
+ <namespace key="2300" case="first-letter">소도구</namespace>
+ <namespace key="2301" case="first-letter">소도구토론</namespace>
+ <namespace key="2302" case="case-sensitive">소도구정의</namespace>
+ <namespace key="2303" case="case-sensitive">소도구정의토론</namespace>
+ <namespace key="2600" case="first-letter">주제</namespace>
+ </namespaces>
+ </siteinfo>
+ <page>
+ <title>CANAAN</title>
+ <ns>0</ns>
+ <id>524</id>
+ <revision>
+ <id>4059</id>
+ <timestamp>2018-11-23T13:02:39Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <comment>새 문서: ===개요=== CANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 4...</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="1318">===개요===
+
+CANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 428 ~ 봉쇄된 시부야에서 ~ 에 등장했던 인물들 중 하나인 '카난'과 '오오사와 마리아'를 중심으로 한 이야기이지만, 독립적으로 보아도 무방하다. 
+
+감독은 꽃피는 이로하, 천랑 등 P.A.works에서 활약한 안도 마사히로가 맡았다.
+
+게임 428에서부터 카난 편의 스토리는 나스 키노코가 맡았기에, 애니메이션 CANAAN에서도 그가 원안을 맡았다. 단, 시리즈 구성 및 각본은 오카다 마리. 
+
+
+
+===스토리===
+
+새내기 카메라맨 오오사와 마리아는 취재하러 들른 상하이에서 기괴한 사건에 휘말린다. 궁지에서 도와준 사람은 소식이 끊겼던 친구 카난. 그녀는 범죄조직 ‘헤비’의 수령이자 숙적인 알파르트를 뒤쫓고 있었다. 독립된 오감이 동시에 기능하는 ‘공감각'으로 초인적인 전투를 펼치는 카난이지만, 알파르트의 흉계는 차근차근 진행되어가고 있었다….
+
+
+===등장인물===
+
+* 카난
+
+* 알파르트
+
+* 오오사와 마리나
+
+* 량치
+
+* 융융
+
+
+===스태프===
+===삽입곡===
+===각화 리스트===</text>
+ </revision>
+ <revision>
+ <id>4069</id>
+ <parentid>4064</parentid>
+ <timestamp>2018-11-25T13:35:35Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="4161">{{애니메이션
+|구분 = TV 애니메이션
+|대표장르 = 버디물
+|제목 = CANAAN
+|항목모양 =
+|제목모양 = 
+|로고 = 
+|사진 = 
+|장르 = 버디물, 액션
+|화수 = 13화
+|전작 = 428 ~ 봉쇄된 시부야에서 ~ (비디오 게임)
+|후속작 = 
+&lt;!-- 방영 정보: 현지 --&gt;
+|현지국가 = 일본
+|방영일자 = 2009. 7. 4. ~ 2009. 9. 26.
+|최속방송 = 
+|주관방송 = Tokyo MX
+|방영시각 = 
+|개봉일자 = 
+|상영시간 = 
+|방영사이트 = 
+|공식사이트 = https://www.ponican.jp/canaan/index.html
+&lt;!-- 방영 정보: 한국 --&gt;
+|한국방영일자 = 
+|한국최속방송 = 
+|한국방영시각 = 
+|한국개봉일자 = 
+|한국상영시간 = 
+|한국방영사이트 = 애니플러스
+|한국공식사이트 = 
+&lt;!-- 제작 정보 --&gt;
+|감독 = 안도 마사히로
+|시리즈 구성 = 오카다 마리
+|캐릭터 원안 = 타케우치 타카시
+|음악 = 나나세 히카루
+|제작사 = P. A. Works
+|제작위원회 = Project CANAAN
+&lt;!-- 세부 제작 정보 --&gt;
+|각본 = 오카다 마리
+|연출 = 
+|캐릭터 디자인 = 세키구치 카나미
+|미술감독 = 와키 타케시
+|색채설계 = 이노우에 카츠에 
+|촬영감독 = 나미키 사토시
+|음향감독 = 이케타카와 진
+|음악제작 = 나나세 히카루
+|음악 프로듀서 = 사이토 시게루
+|프로듀스 = 이모션
+}}
+===개요===
+
+CANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 428 ~ 봉쇄된 시부야에서 ~ 에 등장했던 인물들 중 하나인 '카난'과 '오오사와 마리아'를 중심으로 한 이야기로, 어느 정도는 게임 428의 지식을 알고 있는 것으로 상정하고 진행되기도 한다. 
+
+감독은 꽃피는 이로하, 천랑 등 P.A.works에서 활약한 안도 마사히로가 맡았다.
+
+게임 428에서부터 카난 편의 스토리는 나스 키노코가 맡았기에, 애니메이션 CANAAN에서도 그가 원안을 맡았다. 단, 시리즈 구성 및 각본은 오카다 마리. 
+
+===스토리===
+
+새내기 카메라맨 오오사와 마리아는 취재하러 들른 상하이에서 기괴한 사건에 휘말린다. 궁지에서 도와준 사람은 소식이 끊겼던 친구 카난. 그녀는 범죄조직 ‘헤비’의 수령이자 숙적인 알파르트를 뒤쫓고 있었다. 독립된 오감이 동시에 기능하는 ‘공감각'으로 초인적인 전투를 펼치는 카난이지만, 알파르트의 흉계는 차근차근 진행되어가고 있었다….&lt;ref&gt;[http://www.yes24.com/24/goods/6271092 Yes24 소설판 소개에서 발췌] &lt;/ref&gt;
+
+===등장인물===
+
+* '''카난''' (CV : 사와시로 미유키) 중동계의 소녀. 범죄조직 '헤비(뱀)'의 대항조직에 소속한 철의 투쟁대행인. 독립하여 있는 오감을 동시에 기능하는 공감각자이며, 그 능력을 사용해 표범과 같이 움직임으로 적을 해치운다. 중동 거리에서 오오사와 마리나와 만나 친구가 되었다. 여기서 카난이란, 성경에 나오는 '가나안'과 같은 의미이다.
+
+* '''알파르트''' (CV : 사카모토 마아야) 범죄조직 '헤비(뱀)'의 실질적 보스이며, 카난과는 숙적 관계. 특징은 왼쪽 어깨에 그려진 뱀문양의 문신. 신체능력은 일반인의 그걸 단숨에 넘어버리며, 전술에 있어서도 조예가 깊다. 또한 경제에 대한 지시도 있어, 링 챠의 주인이기도 하다.
+
+* '''오오사와 마리나''' (CV 난조 요시노) 카난의 친우이며, 삼류 가십지 '헤븐 출판'의 신인 카메라맨. 아직도 필름 카메라를 애용하고 있다. 성격은 좋게 말하면 밝으며 나쁘게 말하면 지나치게 낙천적. 
+
+* '''량치''' (CV : 다나카 리에) 범죄조직 '헤비(뱀)' 소속. 알파르트를 숭배하고 있으며, 카난에 대한 강한 적대감을 갖고 있다. 표면적인 직업은 타이다라사의 사장 비서. 평소에도 BB탄을 사용하는 장난감 총기를 휴대하고 다닌다.
+
+* '''융융'''
+
+===스태프===
+===삽입곡===
+===각화 리스트===
+&lt;references /&gt;</text>
+ </revision>
+ </page>
+ <page>
+ <title>Ciel ~ The Last Autumn Story ~</title>
+ <ns>0</ns>
+ <id>525</id>
+ <revision>
+ <id>4066</id>
+ <timestamp>2018-11-23T13:37:51Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <comment>항목 개설</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="916">===개요===
+Ciel ~ The Last Autumn Story ~ 는 임주연의 장편만화로, 월간 만화잡지 issue에서 2004년 11월에서 연재를 시작하여 2013년 9월호(단행본 23권)에 완결되었다.
+
+증기기관이 발전한 유럽과 같은 배경이지만, 용과 마수과 존재하며 마법이 존재하는 세계관으로 진행하는 판타지 만화이다. 마법에 대한 설정 중에 특기할만한 것은, 마녀들은 '필드'를 전개하여 마법을 사용하지만 자신의 힘으로는 빠져나오지 못해 이를 보조해줄 파트너 마녀인 '패밀리어'를 필요로 한다는 것이며, 마녀와 패밀리어의 관계는 Ciel 작품 전체의 전개에도 핵심이 되어있다.
+
+===스토리===
+===등장인물===
+
+* 이비엔 마그놀리아
+* 라리에트 킹 다이아몬드
+* 크로히텐
+* 제뉴어리 마이어크로프트 라이트스피어
+* 도터
+* 옥타비아</text>
+ </revision>
+ <revision>
+ <id>4078</id>
+ <parentid>4077</parentid>
+ <timestamp>2018-11-25T13:56:38Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <comment>/* 등장인물 */</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="1856">{{만화 정보
+|제목 = Ciel ~ The Last Autumn Story ~
+|사진 = 
+|작가 = 임주연
+|출판사 = 대원씨아이
+|출판사국적 = 한국
+|연재처 = Issue
+|연재처국적 = 한국
+|형태 = 잡지 연재
+|대표장르 = 판타지
+|장르 = 판타지, 학원
+|연재시작 = 2004년 11월호
+|연재주기 = 월간
+|한국권수 = 23
+|한국최신발매일 = 2013. 11. 01.
+}}
+
+===개요===
+Ciel ~ The Last Autumn Story ~ 는 임주연의 장편만화로, 월간 만화잡지 issue에서 2004년 11월에서 연재를 시작하여 2013년 9월호(단행본 23권)에 완결되었다.
+
+증기기관이 발전한 유럽과 같은 배경이지만, 용과 마수과 존재하며 마법이 존재하는 세계관으로 진행하는 판타지 만화이다. 마법에 대한 설정 중에 특기할만한 것은, 마녀들은 '필드'를 전개하여 마법을 사용하지만 자신의 힘으로는 빠져나오지 못해 이를 보조해줄 파트너 마녀인 '패밀리어'를 필요로 한다는 것이며, 마녀와 패밀리어의 관계는 Ciel 작품 전체의 전개에도 핵심이 되어있다.
+
+===스토리===
+최고의 미녀 이비엔은 나고 자란 마을을 떠나 도시 뉴턴의 로우드 마법학교에 입학한다. 그곳에서 마법사 가문의 후계자, 제뉴어리, 아름다운 얼굴에 어울리지 않는 무술 소녀 라리에트, 알 수 없는 과거의 선생 크로히텐 등 개성 있는 친구들을 만나며 마녀로서 성장해가는데…!!&lt;ref&gt;[[https://play.google.com/store/books/details/임주연_씨엘_1권?id=b1XZRySyviAC | 구글북스 씨엘 1권 소개란]]&lt;/ref&gt;
+
+===등장인물===
+
+* '''이비엔 마그놀리아'''
+* '''라리에트 킹 다이아몬드'''
+* '''크로히텐'''
+* '''제뉴어리 마이어크로프트 라이트스피어'''
+* '''도터'''
+* '''옥타비아'''
+&lt;references /&gt;</text>
+ </revision>
+ </page>
+ <page>
+ <title>Citrus</title>
+ <ns>0</ns>
+ <id>482</id>
+ <revision>
+ <id>3717</id>
+ <timestamp>2018-08-26T11:56:48Z</timestamp>
+ <contributor>
+ <username>Acelaten</username>
+ <id>17</id>
+ </contributor>
+ <comment>새 문서: {{만화 정보 |제목 = citrus |일본어제목 = |영어제목 = |사진 = citrus1.jpg |사진2 = |사진설명 = |작가 = 사부로우타 |작가원문 = サブロウタ |글...</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="852">{{만화 정보
+|제목 = citrus
+|일본어제목 = 
+|영어제목 = 
+|사진 = citrus1.jpg
+|작가 = 사부로우타
+|작가원문 = サブロウタ
+|출판사 = 이치진샤
+|출판사국적 = 일본
+|연재처 = 코믹 유리히메
+|정발 = 레진코믹스
+|영어판 = Seven Seas Entertainment
+|형태 = 월간 연재
+|장르 = 연애, 드라마, 학원
+|배경 = 현대, 고등학교
+|연재시작 = 2013년 1월호
+|연재시작일 = 2012. 11. 17
+|연재종료 = 2018년 10월호
+|연재종료일 = 2018. 8. 18.
+|연재주기 = 월간
+|일본권수 = 9
+|일본최신발매일 = 2018. 3. 13.
+|한국권수 = 7
+|한국최신발매일 = 2018. 2. 14.
+|영어권수 = 8
+|영어최신발매일 = 2018. 8. 28.
+}}</text>
+ </revision>
+ <revision>
+ <id>4024</id>
+ <parentid>3801</parentid>
+ <timestamp>2018-11-06T12:08:24Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="1461">===개요===
+
+citrus는 사부로우타가 코믹 유리히메에 2012년 11월부터 2018년 8월까지 연재했던 만화이다.
+
+미디어 믹스의 일환으로 팟쇼네에서 애니메이션을 제작, 총 12화로 2018년 1월부터 2018년 3월까지 방영하였다.요스가노 소라, 늑대와 향신료, 마왕용자 등의 작품에서 감독을 맡았던 타카하시 타케오가 감독을 맡고, key사 출신의 히사야 나오키가 [[플립 플래퍼즈]]와 마찬가지로 하야시 나오키 명의로 시리즈 구성(Chief Writer)을 맡았다.
+ 
+
+===만화===
+{{만화 정보
+|제목 = citrus
+|일본어제목 = 
+|영어제목 = 
+|사진 = citrus_1.jpg
+|작가 = 사부로우타
+|작가원문 = サブロウタ
+|출판사 = 이치진샤
+|출판사국적 = 일본
+|연재처 = 코믹 유리히메
+|연재처국적 =
+|정발 = 레진코믹스
+|영어판 = Seven Seas Entertainment
+|형태 = 잡지 연재
+|대표장르 = 연애
+|장르 = 연애, 드라마, 학원
+|연재시작 = 2013년 1월호
+|연재시작일 = 2012. 11. 17
+|연재종료 = 2018년 10월호
+|연재종료일 = 2018. 8. 18.
+|연재주기 = 월간
+|일본권수 = 9
+|일본최신발매일 = 2018. 3. 13.
+|한국권수 = 7
+|한국최신발매일 = 2018. 2. 14.
+|영어권수 = 8
+|영어최신발매일 = 2018. 8. 28.
+}}
+
+{{DISPLAYTITLE:citrus}}
+
+====스토리====
+====등장인물====
+===애니메이션===
+====스태프====
+====삽입곡====
+====각화 리스트====</text>
+ </revision>
+ </page>
+ <page>
+ <title>GRAVITY RUSH 시리즈</title>
+ <ns>0</ns>
+ <id>522</id>
+ <revision>
+ <id>4079</id>
+ <parentid>4072</parentid>
+ <timestamp>2018-11-27T07:42:16Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <comment>/* 게임플레이 */</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="4966">===개요===
+
+Gravity Rush(그래비티 러시) 시리즈는 소니 인터랙티브 엔터테인먼트 일본 스튜디오(SIEJ)에서 개발된 액션 어드벤쳐 게임으로, 1편인 『Gravity Rush : 소녀는 하늘로 떨어졌다』와 2편 『Gravity Rush 2 : 하늘로 떨어진 소녀의 선택』으로 이루어져 있다. 1편은 2012년에 발매된 Vita 독점 타이틀이었으나, 2편의 2017년 발매와 함께 PS4로 리마스터되었다. 2편은 PS4독점. 양쪽 모두 한국어 자막을 지원한다.
+
+일본판 타이틀은 조금 다르고 부제가 긴 편인데, 1편은 『Gravity Daze ~ 중력적 현기증 상층으로 귀한에 있어 그녀의 내우주에 발생한 섭동』, 2편은 『Gravity Daze ~ 중력적 현기증 완결편 : 상으로 귀환의 끝에서, 그녀의 내우주에 수렴한 선택』이다. 
+
+===게임플레이===
+
+제목에 중력이 들어가는 것에서도 알 수 있듯이, 중력의 방향을 자유자재로 바꿀 수 있다는 게 가장 큰 특징이다. 구체적으로 예를 들면 특정한 버튼을 눌러 공중에 부유하거나, 부제처럼 하늘을 향해 떨어지거나 하는 식의 플레이, 혹은 건물 위로 미끄러지는 플레이 등이 가능하다. 또한 Vita나 PS4 컨트롤러의 자이로 기능을 이용하여, 게임 내의 캐릭터 상황과 컨트롤러의 기울기가 서로 연동되어 있다.
+
+이러한 액션을 바탕으로, 공중 도시 헥사빌에서 메인미션을 진행하거나, 마을 사람들로부터 서브 퀘스트를 받아 움직이는 오픈월드 스타일의 게임이다. 다양한 장소에 숨겨진 화폐 '잼'을 모으거나 그런 잼으로 멈춰있던 시설을 복구 시키는 등의 액션도 가능하다. 마을 사람들이 이용하는 모노레일 등의 교통수단을 이용할 수 있으나, 직접 중력을 조작하여 움직이는 것도 가능하다.
+
+부드러운 색감에 툰 렌더링을 이용한 만화나 애니메이션 같은 그래픽도 특징적이다. 컷씬은 이러한 분위기를 잘 살리는 방드데시네(프랑스만화) 스타일로 진행된다. 컷씬 속의 언어는 그래비티 러시 시리즈만의 독자적인 것(인공언어)이다.
+
+2편의 경우에 오픈월드의 크기가 대폭 커졌으며, 전투의 플레이 스타일을 바꿀 수 있거나 육성요소 등으로 선택의 폭이 비교적 넓어졌다.
+
+===스토리===
+
+* '''Gravity Rsuh 1편'''
+
+기억을 잃은 소녀 &quot;캣&quot;은, 불가사의한 검은 고양이와 만나 &quot;중력술사&quot;가 된다. 거대한 원주의 주위를 둘러싼 듯이 세워진 공중도시 &quot;헥사빌.&quot; 이 도시는 &quot;중력풍&quot;의 위협에 의해, 파괴의 위기에 쳐해있었다. 
+
+거주지를 잃고, 방황하는 사람들의 모습도 눈에 뜨이기 시작한 헥사빌의 한 편에서, 도시 사람들로부터 &quot;캣&quot;이라고 불리는 소녀가 눈을 뜬다.
+
+&quot;중력 고양이 더스티&quot;와 만나 &quot;중력술사&quot;가 된 캣은, 폭풍과 함께 나타난 수수께끼의 생물 &quot;네비&quot;의 위협으로부터 사람들을 지키고, 폭풍에 &quot;빼앗긴 마을&quot;을 탈환하기 위해 분주한다. 또 한명의 중력술사 소녀 &quot;크로우&quot;를 선두로 강적들과의 싸움을 겪으며 &quot;캣&quot;은 강하게 성장하여, 마침내 마을과 자신을 둘러싼 수수께끼의 핵심에 다가간다...&lt;ref&gt;https://www.jp.playstation.com/scej/title/gravitydaze/ps4/&lt;/ref&gt;
+
+* '''Gravity Rush 2편'''
+
+도네리카 전 시장에 일으킨 신병기 폭주사건에서 부흥이 진행된 공중도시 헥사빌. 이상한 중력파의 흔들림이 관측되어, 중력 공주 캣은 파트너인 중력술사 크로우, 경관 시드와 함께 조사에 착수한다. 이상한 기척을 느낀 캣의 주위를 전례없는 규모의 거대한 중력 폭풍이 습격하여 세 명은 어쩔 수 없이 중력의 소용돌이에 삼켜지고 만다-- 
+
+근처의 이차원, 캣은 중력 폭풍에 삼켜진 폐허의 끝에서, 중력광석의 채굴을 생업으로 하는 &quot;방가&quot; 취락 집단에 흘러들어갔다. 중력 고양이 더스티와 떨어지고만 캣에게는 아무런 특별한 능력도 없는 노동자로서 가혹한 채굴 작업의 나날을 보낸다. 같이 취락에 표류한 시드와 채굴작업에 걸친 끝에, 이 세계에는 흑충이라 불리는 괴물, 신종의 네비가 모습을 드러내고 절체절명의 위기에 빠진 두 사람이었지만...&lt;ref&gt;https://www.jp.playstation.com/scej/title/gravitydaze/2/&lt;/ref&gt;
+
+===등장인물===
+* '''캣'''
+* '''레이븐'''
+* '''시드'''
+
+===미디어 믹스===
+====애니메이션====
+
+1편과 2편 사이의 이야기를 다룬 Gravity Rush - Overture가 미디어 믹스로 제작되었다. 풀 3D 애니메이션으로, 스튜디오 카라가 제작. 플레이스테이션의 [[https://www.youtube.com/watch?v=tFeXtu-3u78 유튜브 채널]]에서 공개중.
+
+===스태프===
+&lt;references /&gt;</text>
+ </revision>
+ </page>
+ <page>
+ <title>LITA</title>
+ <ns>0</ns>
+ <id>372</id>
+ <revision>
+ <id>3980</id>
+ <parentid>3977</parentid>
+ <timestamp>2018-10-27T21:49:50Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <comment>한국어 관련 레퍼런스 추가</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="668">[[파일:KMNZ LITA.jpg|섬네일]]
+이름은 리타라고 읽는다. 유닛 KMNZ에 속해있다.
+
+주식회사 Wright Flyer Live Entertainment에서 프로듀스 중인 버추얼 유튜버. 허스키한 보이스로, 유닛에서 랩을 주로 담당하고 있다. 라디오 1회에서 특기로 한국어를 할 줄 안다고 밝힌 바 있는데, 본인 말에 따르면 표준어가 아니라 &quot;부산쪽 말&quot;&lt;ref&gt;[https://www.youtube.com/watch?v=p1GUMij5a00&amp;t=13m50s KMNZ LITA RADIO #1]&lt;/ref&gt;이라고.
+
+[https://twitter.com/kmnzlita 트위터] [https://www.youtube.com/channel/UCwuS0uY-Z2Gr_5OV2oFybFA?sub_confirmation=1 유튜브]
+
+[[분류:버츄얼 유튜버]]</text>
+ </revision>
+ </page>
+ <page>
+ <title>LIZ</title>
+ <ns>0</ns>
+ <id>370</id>
+ <revision>
+ <id>3397</id>
+ <parentid>3396</parentid>
+ <timestamp>2018-08-08T04:44:45Z</timestamp>
+ <contributor>
+ <username>힣햏힣</username>
+ <id>4</id>
+ </contributor>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="350">[[분류:버츄얼 유튜버]]
+[[파일:KMNZ LIZ.jpg|섬네일]]
+
+이름은 리즈라고 읽는다. 유닛 KMNZ에 속해있다.
+
+주식회사 Wright Flyer Live Entertainment에서 프로듀스 중인 버추얼 유튜버.
+
+[https://twitter.com/kmnzliz 트위터] [https://www.youtube.com/channel/UCRMpIxnySp7Fy5SbZ8dBv2w?sub_confirmation=1 유튜브]</text>
+ </revision>
+ </page>
+ <page>
+ <title>Last day of spring</title>
+ <ns>0</ns>
+ <id>538</id>
+ <revision>
+ <id>4174</id>
+ <timestamp>2019-10-16T04:24:58Z</timestamp>
+ <contributor>
+ <username>사샤나즈</username>
+ <id>11</id>
+ </contributor>
+ <comment>새 문서: {{게임 정보 | 제목 = last day of spring | 이미지 = | 배경색 = | 글자색 = #F791E8 | 테두리색 = | 설명 = | 1...</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="1696">{{게임 정보
+| 제목 = last day of spring
+| 이미지 =
+| 배경색 =
+| 글자색 = #F791E8
+| 테두리색 =
+| 설명 =
+| 1인 개발 =
+| 시리즈 =
+| 엔진 = Ren'Py
+| 플랫폼 =
+| 언어 = 독일어, 영어, 인도네시아어, 일본어, 한국어, 포르투갈어 (브라질)
+| 출시 = 2019년 4월 30일
+| 장르 = 비주얼 노벨
+| 모드 = 
+| 이용가 등급 = 
+| 미디어 = 
+| 요구사양 = 
+| 운영체제 = Windows, Linux, macOS
+| 입력장치 =
+| 용량 = 약 32 MB
+| 사운드 =
+| 한글패치 =
+| 음성 =
+| 후커코드 =
+| AT코드 =
+| 이전작 = [[One night, hot springs]]
+| 후속작 = 
+| 가격 = 무료 (가격 책정 자유)&lt;br&gt;$3 이상 지불할 경우 아트 컬렉션 추가
+| 관련 사이트 = [https://npckc.itch.io/last-day-of-spring]
+| 주석 =
+}}
+
+== 개요 ==
+
+주인공 에리카가 트랜스젠더 여성 친구 하루의 생일 파티를 위해 스파에 가려는 내용의 [[비주얼 노벨]]이다.
+
+== 등장인물 ==
+
+* 나가타 에리카 (永田エリカ) 하루의 친구. 마나미에게 하루의 생일에 대해 전해 듣고 생일 파티를 준비하게 된다.
+
+* 스즈키 하루 (鈴木ハル) 20세 비수술 트랜스젠더 여성이다. 생일을 앞두고 첫 직장에 출근하게 된다. 외출을 좋아하는 편이 아니며, 마나미를 좋아하고 있다.
+
+* 타치바나 마나미 (立花愛美) 하루의 소꿉친구이다. 남자친구가 있다.</text>
+ </revision>
+ </page>
+ <page>
+ <title>Life is Strange</title>
+ <ns>0</ns>
+ <id>532</id>
+ <revision>
+ <id>4150</id>
+ <parentid>4119</parentid>
+ <timestamp>2019-08-25T14:37:42Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <comment>/* 게임플레이 */</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="3534">===개요===
+
+Life Is Strange는 어드벤쳐 장르의 비디오 게임이다. 프랑스 회사인 DONTNOD가 언리얼 3 엔진으로 개발하였으며, 스퀘어 에닉스를 통해 PC, PS3/4, XBOX 360/ONE 등으로 퍼블리시되었다. 에피소드형 판매 방식을 취했으며, 시즌 1은 2015년에 다섯 에피소드로 종료되었다. 
+
+시즌 2가 진행중이나 시즌 2는 두 형제의 이야기를 다루고 있기에 본 문서에서는 다루지 않는다.
+
+===게임플레이===
+
+Life is Strange는 직접 캐릭터를 조작하는 3인칭 형식의 그래픽 어드벤쳐이며, 플레이어는 주변인물과 대화와 퍼즐풀이를 이용해 게임을 진행한다. 이 게임은 여기에 더해 시간을 되감는 초능력을 통해, 1) 등장인물의 말을 듣고 시간을 되돌려 관련된 키워드를 획득하거나 2) 특정 장소에 이동한 뒤에 시간을 되돌려 퍼즐을 푸는 등의 플레이를 요구한다. 이 되감기 기능은 리트라이 기능도 겸하고 있어, 플레이어는 실패의 두려움없이 비교적 느긋히 선택할 수 있다. 
+
+주인공 &quot;맥스 클로우필드&quot;는 사진과에 소속한 학생이라는 설정에 따라, 특정한 장소, 특정한 상황에 따라서 여러가지 사진을 찍어 일기에 갱신하는 것을 수집요소로 삼고 있다. 
+
+다섯 에피소드로 나누어서 발매되었으나, 지난 에피소드에서의 선택이 다음 에피소드에서 반영되는 등 각각의 에피소드가 완전히 독립적이지는 않다. 각 에피소드의 플레이시간은 2시간~3시간 정도로, 총 플레이타임은 대략 15시간 정도이다.
+
+===스토리===
+
+블랙웰 고등학교의 사진과에 속한 주인공 &quot;맥스 클로우필드&quot;는, 오랜 친구였던 &quot;클로이 프라이스&quot;를 구하면서 시간을 되돌릴 수 있는 능력을 깨닫게 된다. 맥스와 클로이 두 콤비는 실종된 학생인 레이첼 엠버를 좇는 조사에 착수하며, 아카디아 만의 어두운 면을 마주하게 된다. 한편, 맥스는 지속적으로 아카디아 만에 커다란 태풍우가 다가오는 환상을 보게 되며, 이 파멸적인 미래를 막을 방도를 알아내야만 한다. &lt;ref&gt; [https://lifeisstrange.square-enix-games.com/en-us/games/life-is-strange/about 공식 홈페이지 소개란 참조]&lt;/ref&gt;
+
+주인공 맥스는 시간을 되돌릴 수 있지만 그 능력은 제한적이기에 작품은 대체로 시계열 순서대로 진행된다. 맥스와 클로이의 재회로 시작된 관계의 변화가 메인플롯이지만, 초반에는 케이트 마시의 바이럴 비디오를 둘러싼 문제, 후반에는 레이첼 앰버의 행방불명을 둘러싼 문제가 중점적으로 다루어져 미스터리 장르적인 면모도 존재한다. 이 모든 사건들은 블랙웰 고등학교를 중점으로 하며 그런 점에서 청소년물, 혹은 청춘물의 영역에도 포함된다.
+
+블랙웰 고등학교는 예술 부문에 특화되어 있으며, 그러한 설정을 반영하여 학생들이 대화할 때 다양한 영화, 애니메이션, 가사를 인용하며 삽입곡도 기성곡들을 대거 사용하는 등 대중문화와 친숙한 면모를 보여준다. 
+
+
+===등장인물===
+
+*맥스 클로우필드
+*클로이 프라이스
+*레이첼 앰버
+*케이트 마시
+*빅토리아 체이스
+*네이선 프레스코
+*워렌 그레이엄
+*마크 제퍼슨
+*데이비드 매드슨
+*웰슨 교장
+*프랭크 바우어
+&lt;references /&gt;</text>
+ </revision>
+ </page>
+ <page>
+ <title>One night, hot springs</title>
+ <ns>0</ns>
+ <id>367</id>
+ <revision>
+ <id>4175</id>
+ <parentid>4173</parentid>
+ <timestamp>2019-10-16T04:26:25Z</timestamp>
+ <contributor>
+ <username>사샤나즈</username>
+ <id>11</id>
+ </contributor>
+ <minor/>
+ <comment>언어 및 출시일 추가</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="1992">{{게임 정보
+| 제목 = one night, hot springs
+| 이미지 =
+| 배경색 =
+| 글자색 = #F791E8
+| 테두리색 =
+| 설명 =
+| 1인 개발 =
+| 시리즈 =
+| 엔진 = Ren'Py
+| 플랫폼 =
+| 언어 = 독일어, 영어, 스페인어 (라틴 아메리카), 인도네시아어, 일본어, 한국어, 포르투갈어, 러시아어, 베트남어, 중국어, 중국어 (번체)
+| 출시 = 2018년 2월 27일
+| 장르 = 비주얼 노벨
+| 모드 = 
+| 이용가 등급 = 
+| 미디어 = 
+| 요구사양 = 
+| 운영체제 = Windows, Linux, macOS
+| 입력장치 =
+| 용량 = 약 30 MB
+| 사운드 =
+| 한글패치 =
+| 음성 =
+| 후커코드 =
+| AT코드 =
+| 이전작 =
+| 후속작 = [[Last day of spring]]
+| 가격 = 무료 (가격 책정 자유)&lt;br&gt;$3 이상 지불할 경우 아트 컬렉션 추가
+| 관련 사이트 = [https://npckc.itch.io/one-night-hot-springs itch.io]
+| 주석 =
+}}
+
+== 개요 ==
+
+트랜스젠더 여성인 하루가 친구들과 함께 온천에 가는 내용의 [[비주얼 노벨]]이다.
+
+[https://itch.io/jam/trans-gal-jam 트랜스 걸 잼] 행사 참여 작품이다.
+
+== 등장인물 ==
+
+* 스즈키 하루 (鈴木ハル) 19세 트랜스젠더 여성이다. 수술하지 않으면 성별을 바꿀 수 없는 일본 정책의 문제로 여전히 법적 성별을 바꾸지 못했으며 법적 이름도 하루토로 남아 있는 상태이다. 남들의 시선이 두려워 아직 온천에 가 본 적이 없다.
+
+* 타치바나 마나미 (立花愛美) 주인공의 소꿉친구. 20세 생일을 맞아 하루를 온천에 초대한다.
+* 나가타 에리카 (永田エリカ) 마나미의 친구로, 온천에서 하루와 처음 만나게 된다. 노란 머리카락은 자연색이라고 한다.</text>
+ </revision>
+ </page>
+ <page>
+ <title>PSYCHO-PASS</title>
+ <ns>0</ns>
+ <id>453</id>
+ <revision>
+ <id>3567</id>
+ <timestamp>2018-08-10T00:05:24Z</timestamp>
+ <contributor>
+ <username>Syhn</username>
+ <id>10</id>
+ </contributor>
+ <comment>새 문서: {{애니메이션 |로고 = |구분 = TV 애니메이션 |장르 = SF, 수사 |제목 = PSYCHO-PASS |제목/원어 = サイコパス |최속방송 = 후지TV |한국최속방송 =...</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="929">{{애니메이션
+|로고 = 
+|구분 = TV 애니메이션
+|장르 = SF, 수사
+|제목 = PSYCHO-PASS
+|제목/원어 = サイコパス
+|최속방송 = 후지TV
+|한국최속방송 = 애니플러스
+|현지국가=일본
+|방영일자 = 2012년 10월 12일 ~ 2013년 3월 22일 (1기)&lt;/br&gt;2014년 10월 10일 ~ 2014년 12월 19일 (2기)
+|감독 = 모토히로 카츠유키 (총감독), 시오타니 나오요시 (감독)
+|각본 = 우로부치 겐, 후카미 마코토, 타카하 아야
+|캐릭터 디자인 = 아마노 아키라 (캐릭터 원안), 아사노 쿄지(캐릭터 디자인·총 작화감독
+|음악 = 칸노 유고
+|제작사 = Production I.G
+|화수 = 22화(1기)&lt;/br&gt;11화(2기)
+|공식사이트 = http://psycho-pass.com/
+}}
+
+===개요===
+
+===등장인물===
+
+====1기====
+* 츠네모리 아카네:작품의 주인공
+* [[쿠니즈카 야요이]]
+* [[카라노모리 시온]]
+
+====2기====
+* [[시모츠키 미카]]</text>
+ </revision>
+ </page>
+ <page>
+ <title>Roid-로이드-</title>
+ <ns>0</ns>
+ <id>531</id>
+ <revision>
+ <id>4110</id>
+ <parentid>4108</parentid>
+ <timestamp>2019-03-14T16:39:08Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="1719">{{만화 정보
+|제목 = Roid-로이드-
+|일본어제목 = Roid-ロイド－
+|영어제목 = 
+|사진 = 
+|작가 = 시로시
+|작가원문 = しろし
+|출판사 = 이치진샤
+|출판사국적 = 일본
+|연재처 = 유리히메 코믹스
+|연재처국적 = 일본
+|정발 = 
+|영어판 = 
+|형태 = 잡지 연재
+|대표장르 = SF
+|장르 = SF, 히어로물
+|연재시작 = 
+|연재시작일 = 
+|연재주기 = 월간
+|일본권수 = 2
+|일본최신발매일 = 2019. 1. 18. (완결)
+|한국권수 = 
+|한국최신발매일 = 
+|영어권수 = 
+|영어최신발매일 = 
+}}
+
+===개요===
+
+Roid-로이드-는 유리히메 코믹스에서 연재되어, 총 2권으로 완결된 SF백합 만화이다. 스토리의 전개는 근미래의 고등학교의 로봇 연구부를 배경으로 하되, 어느 정도 히어로 물의 요소를 섞어놓았다. 시로시의 깔끔하면서도 인상적인 선의 사용이 돋보인다.
+
+===스토리===
+
+&quot;사람과 로봇이 공생하는 근미래. 로봇 연구부의 부실에는 휠체어 생활을 보내는 학생 &quot;후타우에 유이&quot;, 유이가 스스로의 의식을 카피한 안드로이드 &quot;안나&quot;, 우수한 AI개발자(아키텍트)인 후배 &quot;이치미야 레나&quot;가 있다. 레나가 안드로이드에게 습격을 당하는 것을 계기로, 어떤 사건에 휘말린 세 명이, 비일상 속에서 서로의 존재에 대해 묻고있는 이야기&quot; &lt;ref&gt; 유리히메 코믹스 [https://www.ichijinsha.co.jp/yurihime/title/%e3%81%97%e3%82%8d%e3%81%97/roid-%e3%83%ad%e3%82%a4%e3%83%89/ 소개란]에서 발췌 &lt;/ref&gt;
+
+===등장인물===
+
+====로봇 연구부====
+
+*후타우에 유이
+*이치미야 레나
+*안나
+*선배
+
+====경비부====
+&lt;references /&gt;</text>
+ </revision>
+ </page>
+ <page>
+ <title>S(문화)</title>
+ <ns>0</ns>
+ <id>454</id>
+ <revision>
+ <id>4023</id>
+ <parentid>4022</parentid>
+ <timestamp>2018-11-05T12:10:18Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <minor/>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="4862">'''S''' (일어: '''エス''') 혹은 '''클래스 S''' (영어: '''Class S''', 일어: '''クラスS''' / '''S kankei'''&lt;ref&gt;Shamoon, Deborah (1 January 2009). &quot;The Second Coming of Shôjo&quot; http://hesomagazine.com/japan/the-second-coming-of-shojo/&lt;/ref&gt;)는 20세기 초에 일본에서 사용되던 은어로, 여학생들 사이의 강한 감정적인 유대를 기반으로 한 관계나 그러한 관계를 다룬 일본 소녀만화, 소녀소설의 장르를 말한다. '자매(Sister)'의 머리 글자 S를 가져온 용어로 통용되지만 이 외에도 '소녀(Shoujo)', '아름다움(독어 Schön)', 그리고 '탈출(Escape)'의 약어로서의 의미 또한 가진다.&lt;ref&gt;Robertson, Jeniffer, ''Takarazuka, p.68,'' Citing:
+Hattori, Kakō; Uehara, Michikō (1925). ''Atarashii Kotoba no Jibiki [Dictionary of New Words] (in Japanese)''. Tokyo: Jitsugyō no Nihonsha. pp. 83–84.
+abashima, Tadao; Hida, Yoshifumi; Yonekawa, Akihiko (1984). ''Meiji Taishō Shingo Zokugo Jiten [Dictionary of New Words and Colloquialisms in the Meiji and Taishō Periods] (in Japanese).'' Tokyo: Tōkyōdō Shuppan. p. 41. [https://www.worldcat.org/title/meiji-taisho-shingo-zokugo-jiten/oclc/14078498 OCLC 14078498]&lt;/ref&gt;
+
+=== 개요 ===
+S는 sister의 머리 글자에서 가져온 은어로, 주로 혈연 관계가 없는 여자끼리나 여교사 등과의 열정적인 관계를 나타낸다. 1910년대에 사용되던 다른 은어인 お目와 おでや를 누르고 일반화되는 데에 성공했다.&lt;ref&gt;『近代日本における女同士の親密な関係』 赤枝香奈子　角川学芸出版 (2011/3/1)ISBN 978-4046532312&lt;/ref&gt; 당시 사용되던 은어들은 &quot;에스&quot;이외에도 시스(Sister), 오메(おめでたい), 오카친(オカチン,사이좋은 부부를 일컫는 속어), 바우(バウ), 핸드인(ハンドイン) 등이 있었다고 전해진다&lt;ref&gt;稲垣恭子(2007)『女学校と女学生』中公新書p.103&lt;/ref&gt;
+
+장르로서의 S는 퀴어, 페미니즘적인 성격을 지닌다. 대체로 여학생들 사이의 강한 감정적 동조와 관계의 특수성, 성장과 동성애에 대한 함류를 짙게 가지고 있으며, 그 시대의 신분 차이에 대한 극복이 갈등의 주된 요인인 경우가 많다. 이 때문에 S 장르는 선배와 후배간의 감정적 유대를 주로 그린다.
+
+S 장르의 특징적 부분 중 하나는 '졸업할 때까지의 동성애'라는 클리셰인데, 이는 20세기 초, 동성애를 이성애와 모성으로 발달해나가는 여성성의 성장 수순의 하나로 보던 대중적 시선이 주류였기 때문이다.&lt;ref&gt;Dollase, Hiromi (2003). &quot;Early Twentieth Century Japanese Girls' Magazine Stories: Examining Shōjo Voice in ''Hanamonogatari''(Flower Tales)&quot;. ''The Journal of Popular Culture''. '''36''' (4): 724–755. https://doi.org/10.1111/1540-5931.00043&lt;/ref&gt; 따라서 해당 장르의 전형성은 졸업이라는 끝이 정해져있는 학교, 학원 내에서의 이별에 대한 비극이 주된 소재로 사용되며, 이는 강박적일 정도로 플라토닉 사랑에 대한 함유에 기대어 있다.
+
+요시야 노부코(吉屋信子)의 '꽃 이야기(花物語)'가 해당 장르의 대표작이라 할 수 있으며, '마리아 님이 보고계셔'는 '꽃 이야기'의 현대적 연장선상에 있는 작품으로 간주되곤 한다.
+
+=== 배경과 역사 ===
+
+=== 일본 밖의 S문화 ===
+''&quot;그땐 이게 엑스 형제라는 게 있잖아. 그게 굉장히 유행이었어. 그 때 신입생들이 들어오면은 우리 선배들이 동생들 고르느라고 (...) 그래가지고 그게 많이 맺어졌어. 형 동생으로, 그게 애정 발표야 (엑스 동생이 되면 어떻게 되는 거에요?) 뭐 그냥 동생, 둘이서 뭐 먹으러 같이 댕기고 둘이 뭐 하러 같이 댕기지. 그런 게 많이 있었어. 학생이 작으니깐 상급생 하급생이 그런 관계로 많이 있고 (...) 너무 나가는 애들도 간혹 있었지. 서로 너무나들 좋아해가지고 안 떨어질라고. 그래 누구냐 김봉림인가 그 애인하고 그거 아니여. 너무 좋아해도 안 되니까 둘이 철도, 달리는 철도로 뛰어들어 자살했잖아 -- 정여운(가명), 1913년생, 이화여고보 졸업&quot;''&lt;ref&gt;정미정, 「일제시기 '배운 여성'의 근대교육경험과 정체성에 관한 연구」, 이화여자대학교 여성학 석사논문, 2000, 71~73쪽; 이서, 「언니 저 달 나라로 2 : 1910~1930년대 여성 간의 동반자살과 백합물」, 『퀴어인문잡지 삐라』 2호, 2014, 151쪽에서 재인용. &quot;1960년대 들어 '에스'는 발음이 변화하여 '엑스'로 통용되었다. 그러나 이 인터뷰에서의 '엑스'는 '에스'의 오기로 보인다.&quot;(원주, 같은 쪽)&lt;/ref&gt;
+
+=== S문화와 페미니즘 ===
+&lt;references /&gt;</text>
+ </revision>
+ </page>
+ <page>
+ <title>그 꽃잎에 입맞춤을</title>
+ <ns>0</ns>
+ <id>10</id>
+ <revision>
+ <id>10</id>
+ <timestamp>2018-07-02T13:35:36Z</timestamp>
+ <contributor>
+ <username>백합온실&gt;테사츄</username>
+ <id>0</id>
+ </contributor>
+ <comment>새 문서: ===개요=== &quot;그 꽃잎에 입맞춤을(その花びらにくちづけを)&quot;은 동인 서클 [[후구리야]]에서 만든 [[백합]] [[게임]] 시리즈다. 2012년부터 상업...</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="5667">===개요===
+&quot;그 꽃잎에 입맞춤을(その花びらにくちづけを)&quot;은 동인 서클 [[후구리야]]에서 만든 [[백합]] [[게임]] 시리즈다.
+2012년부터 상업 브랜드로 전환하여 유링유링(ゆりんゆりん), 2014년부터는 성 미카엘 여자학원(聖ミカエル女子学園)에서 발매되었다.</text>
+ </revision>
+ <revision>
+ <id>3347</id>
+ <parentid>3316</parentid>
+ <timestamp>2018-08-08T01:34:13Z</timestamp>
+ <contributor>
+ <username>힣햏힣</username>
+ <id>4</id>
+ </contributor>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="19345">[[파일:소노하나 SD 캐릭터 모음.png|700픽셀]] 
+
+그 꽃잎에 입맞춤을&lt;br&gt;
+その花びらにくちづけを&lt;br&gt;
+A Kiss For The Petals&lt;br&gt;
+
+===개요===
+&quot;그 꽃잎에 입맞춤을&quot;은 동인 서클 [[후구리야]]에서 만든 [[백합]] [[게임]] 시리즈다.&lt;br&gt;
+2012년부터 상업 브랜드로 전환하여 유링유링(ゆりんゆりん), 2014년부터는 성 미카엘 여자학원(聖ミカエル女子学園)에서 발매되었다.&lt;br&gt;
+
+===시리즈===
+
+====게임====
+{| class=&quot;wikitable&quot;
+|-
+! 타이틀 !! 메인 캐릭터 !! 일러스트레이터 !! 시나리오 라이터 !! 발매 브랜드 !! 발매일 !! 비고
+|-
+| 그 꽃잎에 입맞춤을 || 나나미・유우나 || 페코 || 사노 신이치로 || 후구리야 || 2006년 09월 22일 || 후구리야 공식 픽시브에 내용이 일부 공개돼있다. [https://www.pixiv.net/member_illust.php?mode=medium&amp;illust_id=58122128 링크]&lt;br&gt;무인(無印)편이라 불린다.
+|-
+| 그 꽃잎에 입맞춤을 나의 왕자님 || 카에데・사라 || 페코 || 사노 신이치로 || 후구리야 || 2007년 05월 29일 || 
+|-
+| 그 꽃잎에 입맞춤을 당신과 손 잡기 || 마이, 레오 || 페코 || 사노 신이치로 || 후구리야 || 2007년 07월 20일 || '당신과 연인연결'로 많이 직역된다.
+비공식 준한글화패치가 있다. [http://blog.naver.com/athelas222/221319298886 링크]
+|-
+| 그 꽃잎에 입맞춤을 사랑스러운 포토그래프 || 카에데・사라 || 페코 || 사노 신이치로 || 후구리야 || 2008년 06월 06일 || 
+|-
+| 그 꽃잎에 입맞춤을 당신을 좋아하는 행복 || 마이・레오 || 페코 || 사노 신이치로 || 후구리야 || 2008년 08월 01일 || 
+|-
+| 그 꽃잎에 입맞춤을 입술과 키스로 속삭이며 || 나나미・유우나 || 페코 || 사노 신이치로 || 후구리야 || 2008년 12월 11일 || 
+|-
+| 그 꽃잎에 입맞춤을 달콤하고 원해서 녹아내리는 츄 || 타카코・루나 || 페코 || 사노 신이치로 || 후구리야 || 2009년 12월 11일 || 후구리야 공식 홈페이지에 내용이 일부 공개돼있다. 게임 본편과 약간 내용이 다르다. [http://fuguriya.sakura.ne.jp/index2.html 링크]
+|-
+| 그 꽃잎에 입맞춤을 천사의 꽃잎에 물든 색 || 시즈쿠・에리스 || 페코 || 사노 신이치로 || 후구리야 || 2010년 02월 12일 || 
+|-
+| 그 꽃잎에 입맞춤을 하나히랏! || 카오리・아마네, 코하루・마코토 || 페코 || 사노 신이치로 || 후구리야 || 2010년 09월 24일 || 전연령판으로 제작된 '하나히랏!' 시리즈다.
+|-
+| 그 꽃잎에 입맞춤을 달콤하고 어른의 녹아내리는 츄 || 타카코・루나 || 페코 || 사노 신이치로 || 후구리야 || 2010년 12월 03일 || 
+|-
+| 그 꽃잎에 입맞춤을 릴리 플래티넘 || 시즈쿠・에리스 || 페코 || JUN || 후구리야 || 2011년 11월 19일 || 
+|-
+| 그 꽃잎에 입맞춤을 미카엘의 소녀들 || 리사・미야, 나나미・유우나, 카에데・사라, 마이・레오. 타카코・루나, 시즈쿠・에리스 || 페코 || JUN || 유링유링 || 2012년 11월 30일 || [http://moeapp.net/special/hanamika.html 전연령 어플리케이션판]으로도 발매되었다. 영문판이 스팀에 올라갔었으나 현재는 사정에 의해 내려가있다. 영문판은 망가게이머 사이트에서 구매 가능하다.
+|-
+| 그 꽃잎에 입맞춤을 아틀리에의 연인들 || 리사・미야 || 페코 || JUN || 유링유링 || 2013년 03월 29일 || 
+|-
+| 그 꽃잎에 입맞춤을 천사의 동경|| 링고・치아키 || 아이다 타카노부 || 마도카 마도카 || 유링유링 || 2013년 5월 31일 || 아이다 타카노부와 마도카 마도카의 첫 시리즈. 로고가 푸르기 때문에 '청문자(青文字)' 시리즈라고 불린다.&lt;br&gt;비공식 한글화패치가 존재한다. [https://drive.google.com/drive/folders/0B_hY4ZEqq5Pya0JVNWNKeDlnUGM 링크]
+|-
+| 그 꽃잎에 입맞춤을 천사들의 춘연 || 유우노・사츠키 || 아이다 타카노부 || 마도카 마도카 || 유링유링 || 2013년 8월 30일 || 비공식 한글화패치가 존재한다. [https://drive.google.com/drive/folders/0B_hY4ZEqq5Pya0JVNWNKeDlnUGM 링크]
+|-
+| 그 꽃잎에 입맞춤을 백설의 기사 || 릿카・사유키, 리사・미야, 나나미・유우나, 카에데・사라, 마이・레오. 타카코・루나, 시즈쿠・에리스 || 페코 || JUN || 유링유링 || 2013년 12월 20일 || 타카코・루나, 시즈쿠・에리스 루트는 빠져있다.
+|-
+| 그 꽃잎에 입맞춤을 천사들의 약속|| 나루미・아키라 || 아이다 타카노부 || 마도카 마도카 || 유링유링 || 2014년 3월 28일 || 
+|-
+| 그 꽃잎에 입맞춤을 당신에게 맹세하는 사랑 || 시즈쿠・에리스 || 페코 || JUN, 히요시 히요리 || 후구리야 || 2014년 05월 24일 || '백설의 기사'의 팬디스크 게임.
+|-
+| 그 꽃잎에 입맞춤을 만났을 무렵의 추억에 || 리사・미야 || 페코 || JUN, 히요시 히요리 || 성 미카엘 여자학원 || 2015년 3월 13일 || 전연령.
+[http://mikajyo.pink/product/memories/ 어플리케이션판]으로 먼저 발매된 후, 스팀에서 영문판 PC버전이 발매되었다. 스팀판에 대응하는 비공식 한글화패치가 존재한다. [https://drive.google.com/drive/folders/0B_hY4ZEqq5Pya0JVNWNKeDlnUGM 링크]
+|-
+| 그 꽃잎에 입맞춤을 뉴제네!|| 하즈키・마나미, 아야・아이, 리나・나기사 || 아이다 타카노부 || 마도카 마도카 || 성 미카엘 여자학원 || 2015년 06월 26일 || 적문자(赤文字), 청문자(青文字)에 이은 새로운 시리즈. 시리즈의 첫 게임 타이틀과 동일하게 '뉴제네!'시리즈라고 부르고 있다.&lt;br&gt;영문판에 대응하는 비공식 한글화패치가 존재한다. [https://drive.google.com/drive/folders/0B_hY4ZEqq5Pya0JVNWNKeDlnUGM 링크]
+|-
+| 그 꽃잎에 입맞춤을 유리링 || 리사・미야, 마이・레오, 릿카・사유키, 사츠키 || 페코, 아이다 타카노부 || JUN, 히요시 히요리 || 후구리야 || 2015년 11월 21일 || 전연령판.
+|-
+| 그 꽃잎에 입맞춤을 레볼루션! 리나기사 || 리나・나기사 || 아이다 타카노부 || JUN, 히요시 히요리 || 후구리야 || 2015년 12월 25일 || 하즈마나, 아야아이 커플링도 조연으로 출연하며, 릿카・사유키도 등장한다. 토자와 마키라는 새로운 캐릭터가 등장하기도 한다.
+|-
+| 그 꽃잎에 입맞춤을 처음 만난 그 날부터 || 리사・미야 || 페코 || JUN, 히요시 히요리 || 성 미카엘 여자학원 || 2016년 10월 28일 || '만났을 무렵의 추억에'의 마스터판이다. 기존 내용에 19금 신이 추가되었다.
+|}
+
+====드라마CD====
+
+{| class=&quot;wikitable&quot;
+|-
+! 타이틀 !! 메인 커플링
+|-
+| 그 꽃잎에 입맞춤을 쭉 행복한 키스 || 나나미・유우나
+|-
+| 그 꽃잎에 입맞춤을 카에데쨩 슈퍼 모드 || 카에데・사라
+|-
+| 그 꽃잎에 입맞춤을 쭉 함께인 여름 || 마이・레오
+|-
+| 그 꽃잎에 입맞춤을 꿈 같은 나날 || 나나미・유우나
+|-
+| 그 꽃잎에 입맞춤을 출근 아내 다이어리 || 마이・레오
+|-
+| 그 꽃잎에 입맞춤을 카에데쨩의 새댁 쿠킹 || 카에데・사라
+|-
+| 그 꽃잎에 입맞춤을 레오의 어리광 포상 데이즈 || 마이・레오
+|-
+| 그 꽃잎에 입맞춤을 알콩달콩 봄방학 || 리사・미야
+|-
+| 그 꽃잎에 입맞춤을 리사의 골든 바캉스 || 리사・미야
+|-
+| 그 꽃잎에 입맞춤을 흑발의 연인 || 마이・레오
+|-
+| 그 꽃잎에 입맞춤을 두 사람의 캠퍼스 라이프 || 시즈쿠・에리스
+|-
+| 그 꽃잎에 입맞춤을 수국의 계절 || 링고・치아키
+|-
+| 그 꽃잎에 입맞춤을 영화같은 두 사람의 아침 || 리사・미야
+|-
+| 그 꽃잎에 입맞춤을 새끼고양이 같은 연인 || 릿카・사유키
+|-
+| 그 꽃잎에 입맞춤을 그것은 마치 오랜 꿈 || 유우노・사츠키
+|-
+| 그 꽃잎에 입맞춤을 아침까지, 쭉 || 시즈쿠・에리스
+|-
+| 그 꽃잎에 입맞춤을 귀여운 나의 연인 || 타카코・루나
+|-
+| 그 꽃잎에 입맞춤을 3일 늦은 크리스마스 || 마이・레오
+|-
+| 그 꽃잎에 입맞춤을 천사들의 연인데이트 || 나루미・아키라
+|-
+| 그 꽃잎에 입맞춤을 나의 멋진 연인 || 릿카・사유키
+|-
+| 그 꽃잎에 입맞춤을 행복☆디저트 || 아야・아이
+|-
+| 그 꽃잎에 입맞춤을 응석꾸러기 공주와 눈의 왕자님 || 카에데・사라
+|-
+| 그 꽃잎에 입맞춤을 행복이 찾아오는 키스 || 나기사・리나
+|-
+| 그 꽃잎에 입맞춤을 사랑의 기억을 한번 더 || 리사・미야
+|-
+| 그 꽃잎에 입맞춤을 처음 하는 화해 || 마이・레오
+|}
+
+====픽시브 연재소설====
+
+미카엘의 악역 영애
+~백합 게임의 악역 영애가 되었지만… 오히려 더욱 백합을 보고 싶어!~
+
+[https://www.pixiv.net/novel/show.php?id=8755333 링크]
+
+줄거리
+29살 백합 오타쿠 OL이었던 '나'는 어째선지 갑자기 '그꽃잎'의 세계… 심지어 미카녀생으로 환생했다?!
+
+&quot;아아?! 유우나 님에, 마이 씨… 저기엔 카에데쨩도♡&quot;
+
+동경하던 캐릭터를 만나 흥분한 '나'지만…
+그런 자신의 모습이 &quot;그꽃잎&quot;의 최신작,
+&quot;두 사람의 에트랑제&quot;에 나오는 캐릭터인 '이나토리 클라라'라는 것을 깨닫는다.
+
+그래… 클라라는 주인공과 히로인을 괴롭히다가 마지막에는 미카녀에서 쫓겨나는… 악역 영애였는데?!
+
+===캐릭터===
+====적문자====
+오다 나나미&lt;br&gt;
+마츠바라 유우나&lt;br&gt;
+키타지마 카에데&lt;br&gt;
+키타지마 사라&lt;br&gt;
+사와구치 마이&lt;br&gt;
+카와무라 레오&lt;br&gt;
+스미노에 타카코&lt;br&gt;
+호라이센 루나&lt;br&gt;
+호라이센 레나&lt;br&gt;
+아즈미 리사&lt;br&gt;
+아야세 미야&lt;br&gt;
+시노자키 릿카&lt;br&gt;
+시라카와 사유키&lt;br&gt;
+
+====하나히랏!====
+하네무라 카오리&lt;br&gt;
+유우키 아마네&lt;br&gt;
+우오즈미 코하루&lt;br&gt;
+토도 마코토&lt;br&gt;
+
+====청문자====
+아이하라 링고&lt;br&gt;
+타카오 치아키&lt;br&gt;
+카타쿠라 유우노&lt;br&gt;
+이시가미 사츠키&lt;br&gt;
+히카와 나루미&lt;br&gt;
+이나토리 아키라
+
+====뉴제네!====
+오노하라 하즈키&lt;br&gt;
+스오우 마나미&lt;br&gt;
+키미시마 아야&lt;br&gt;
+키미시마 아이&lt;br&gt;
+타카하타 리나&lt;br&gt;
+미사와 나기사
+
+===공식 사이트 일람===
+[http://fuguriya.sakura.ne.jp/ 후구리야]&lt;br&gt;
+[http://masterup.net/yurinyurin/main.html 유링유링]&lt;br&gt;
+[http://mikajyo.pink/ 성 미카엘 여자학원]&lt;br&gt;
+[https://www.pixiv.net/member.php?id=17394070 후구리야 공식 픽시브]&lt;br&gt;
+[https://twitter.com/fuguriya1 후구리야 공식 트위터 계정]&lt;br&gt;
+[https://twitter.com/yurinyurin_soft 유링유링 공식 트위터 계정]&lt;br&gt;
+[https://twitter.com/mikajyo_info 성 미카엘 여자학원 공식 트위터 계정]&lt;br&gt;
+[http://mangagamer.org/sonohana/ 망가게이머 The A Kiss for the Petals 사이트]
+&lt;references /&gt;</text>
+ </revision>
+ </page>
+ <page>
+ <title>놀 소프트(팀 놀량패)</title>
+ <ns>0</ns>
+ <id>535</id>
+ <revision>
+ <id>4141</id>
+ <timestamp>2019-07-18T02:23:45Z</timestamp>
+ <contributor>
+ <username>조조짠</username>
+ <id>37</id>
+ </contributor>
+ <comment>새 문서: == 구성원 == *시아 (총괄) *리믹 (시나리오) *반숙 (일러스트) == 개요 == 추리 백합 비주얼 노벨 게임인 [[탐정뎐]]의 제작팀(제작사)이다. 동...</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="754">== 구성원 ==
+*시아 (총괄)
+*리믹 (시나리오)
+*반숙 (일러스트)
+== 개요 ==
+추리 백합 비주얼 노벨 게임인 [[탐정뎐]]의 제작팀(제작사)이다. 동인 게임 발매 시 팀 놀량패로 활동하며 게임 제작을 진행하였으나, 리마스터판 발매에 기해 게임 심의를 목적으로 사업자 등록을 하게 되었다. 사업자 등록에 따라 명칭이 놀 소프트로 바뀌었다.
+== 기타 ==
+티스토리 블로그(https://nlpgame.tistory.com/2) 를 통해 탐정뎐 제작 당시 이용하였던 배경 소재 등을 무료로 배포하고 있다. 조선시대 배경의 자료 제작에 유용할 듯. 연결된 링크는 해당 블로그의 소재 이용 관련 공지사항 페이지이다.</text>
+ </revision>
+ </page>
+ <page>
+ <title>도희야</title>
+ <ns>0</ns>
+ <id>517</id>
+ <revision>
+ <id>3936</id>
+ <parentid>3934</parentid>
+ <timestamp>2018-10-27T13:42:17Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="2782">===개요===
+
+《도희야》는 2014년 5월 22일에 개봉한 한국 영화로, [[정주리]] 감독의 장편 데뷔작이다. 칸 영화제의 '주목할만한 시선'에 초청되었으며, 전국 관객 10만 6천명을 기록하고 8억원의 수익을 올려 손익분기점을 넘겼다.
+
+러닝타임 119분.
+
+===스토리===
+외딴 바닷가 마을, 14살 소녀 도희빠져나갈 길 없는 그곳에서, 친 엄마가 도망간 후 의붓아버지 용하와 할머니로부터 학대의 상처를 안고 살아가는 도희 앞에 또 다른 상처를 안고 마을 파출소장으로 좌천된 영남이 나타난다. 도희의 구원, 영남. 용하와 마을 아이들의 폭력으로부터 도희를 보호해주는 영남. 도희는 태어나 처음으로 만난 구원자이자, 이 세상의 모든 것이 되어 버린 영남과 잠시도 떨어져 있고 싶지 않다. 하지만, 영남의 비밀을 알게 된 용하가 그녀를 위기에 빠뜨리고...도희의 마지막 선택무력하게만 보였던 소녀 도희, 하지만 영남과 헤어져야 할 위기에 처하자 자신의 온 세상인 영남을 지키기 위해, 돌이킬 수 없는 위험한 선택을 하게 되는데…&lt;ref&gt;[https://www.youtube.com/watch?v=gGh6j56oJwY 유튜브 공식 영화 예고편] 소개에서 발췌&lt;/ref&gt;
+
+===등장인물===
+
+* 선도희
+김새론이 연기. 집 안에서는 의붓아버지인 용하에게 학대 받고, 학교에서는 왕따를 당하는 중학생. 영남이 파출소장이 되어 내려온 날 만나게 되어, 영남으로부터 도움을 받게되는데. 
+
+* 이영남
+배두나가 연기. 현직 경찰로 서울에서 어떤 사건이 있은 뒤, 지방으로 좌천되어 파출소장이 된다. 
+
+* 박용하
+송새벽이 연기. 선도희의 의붓아버지로, 마을에서 외국인 노동자들을 연결해주는 브로커 역할을 하고 있다.
+
+===스태프===
+감독 : [[정주리]]
+
+각본 : [[정주리]]
+
+출연 : 배두나, 김새론, 송새벽 등
+
+제작 : 이창동, 이준동, 김지연
+
+조감독 : 신종훈
+
+촬영 : 김현석
+
+조명 : 김경배
+
+편집 : 이영림
+
+동시녹음 : 김현상
+
+음향 : 김필수, 정민주
+
+미술 : 윤상윤, 조기원
+
+음악 : 장영규
+
+제작사 : 파인하우스 필름, 나우 필름
+
+배급사 : 무비꼴라쥬
+
+
+===수상===
+* 제25회 스톡홀름영화제 최우수 첫 장편상 - 정주리
+* 제23회 부일영화상 신인 감독상 - 정주리
+* 제35회 청룡영화상 신인 여우상 - 김새론
+* 제15회 올해의 여성영화인상 - 정주리
+* 제20회 춘사영화제 - 배두나
+* 제2회 들꽃영화상 - 정주리
+* 제14회 댈러스아시안영화제 - 정주리
+* 제35회 황금촬영상 - 김새론, 정주리, 김현석
+&lt;references /&gt;</text>
+ </revision>
+ </page>
+ <page>
+ <title>마법소녀 마도카 마기카</title>
+ <ns>0</ns>
+ <id>507</id>
+ <redirect title="마법소녀 마도카☆마기카" />
+ <revision>
+ <id>3864</id>
+ <timestamp>2018-08-28T15:28:54Z</timestamp>
+ <contributor>
+ <username>Acelaten</username>
+ <id>17</id>
+ </contributor>
+ <comment>[[마법소녀 마도카☆마기카]] 문서로 넘겨주기</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="52">#넘겨주기 [[마법소녀 마도카☆마기카]]</text>
+ </revision>
+ </page>
+ <page>
+ <title>마법소녀 마도카☆마기카</title>
+ <ns>0</ns>
+ <id>469</id>
+ <revision>
+ <id>4082</id>
+ <parentid>4073</parentid>
+ <timestamp>2018-12-01T11:54:13Z</timestamp>
+ <contributor>
+ <username>다비드상</username>
+ <id>31</id>
+ </contributor>
+ <comment>/* 개요 */</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="4699">{{애니메이션
+|구분 = 오리지널 TV 애니메이션
+|대표장르 = 판타지
+|제목 = {{color|#a89055|마법소녀}} 마도카{{color|#a89055|★}}마기카
+|제목/원어 = {{color|#a89055|魔法少女}}まどか{{color|#a89055|☆}}マギカ
+|제목/영어 = {{color|#a89055|Puella Magi}} Madoka Magica
+|제목/기타 = 
+|항목모양 = background:#d7567f;color:white;
+|제목모양 = background:white;color:#d7567f;border-top: 0.25em solid #a89055;border-bottom: 0.25em solid #a89055
+|로고 = Pmmm logo.png
+|사진 = Madoka magica.png
+|장르 = 마법소녀, SF, 다크 판타지, 스릴러 
+|화수 = 12화
+|전작 = 
+|후속작 = [[마법소녀 마도카☆마기카/극장판]]
+&lt;!-- 방영 정보: 일본 --&gt;
+|현지국가 = 일본
+|방영일자 = 2011. 1. 7. ~ 2011. 4. 21.
+|주관방송 = 마이니치 방송
+|방영시각 = 
+|개봉일자 = 
+|상영시간 = 
+|방영사이트 = http://www.mbs.jp/madoka-magica/
+|공식사이트 = http://www.madoka-magica.com/tv/
+&lt;!-- 방영 정보: 한국 --&gt;
+|한국방영일자 = 
+|한국최속방송 = 애니플러스
+|한국방영시각 = 
+|한국개봉일자 = 
+|한국상영시간 = 
+|한국방영사이트 = http://www.aniplustv.com/main.asp#/tv/program_view.asp?gCode=LV&amp;sCode=002&amp;contentSerial=1173
+|한국공식사이트 = 
+|특이사항 = 판권 만료
+&lt;!-- 제작 정보 --&gt;
+|원작 = Magica Quartet
+|총감독 = 
+|감독 = 신보 아키유키
+|시리즈 구성 = 우로부치 겐
+|음악 = 카지우라 유키
+|제작사 = 샤프트
+|제작위원회 = Madoka Partners &lt;br&gt;마이니치 방송
+&lt;!-- 세부 제작 정보 --&gt;
+|각본 = 우로부치 겐
+|연출 = 
+|캐릭터 원안 = 아오키 우메
+|캐릭터 디자인 = 키사다 타카히로
+|배경 = 
+|작화감독 = 타니구치 준이치로 &lt;br&gt;타카하시 미카
+|미술감독 = 이나바 쿠니히코 &lt;br&gt;카네코 유지 &lt;br&gt;나이토 켄
+|색채설계 = 히비노 진 &lt;br&gt;타키자와 이즈미
+|음향감독 = 츠루오카 요타
+|음악제작 = 라쿠온샤
+|촬영감독 = 
+|편집 = 
+|특수효과 = 
+|3D감독 = 
+|기획 = 타카스 히사시 &lt;br&gt;나츠메 코우이치로 &lt;br&gt;쿠보타 미츠토시 &lt;br&gt;후토노 나오히로 &lt;br&gt;데지 타로우
+|프로듀스 = 이와카미 아츠히로
+}}
+
+마법소녀 마도카☆마기카
+魔法少女まどか☆マギカ
+Puella Magi Madoka Magica
+
+===개요===
+
+2011년 1월에 방영한 애니메이션으로, 애니메이션 제작사 샤프트를 대표하는 감독 신보 아키유키(新房昭之)와 주로 걸 게임의 시나리오를 담당했던 각본가 우로부치 겐(虚淵玄), 「히다마리 스케치」 등의 작품을 연재하던 만화가 아오키 우메의 캐릭터 원안의 애니메이션 작품.
+
+2011년 3월 방송 종료후, 2012년 10월에 TVa의 총집편에 해당하는 극장판 애니메이션으로 [전편] 시작의 이야기와 [후편] 영원의 이야기가 개봉되었다. TVa의 줄거리와는 다른 새로운 전개를 펼치는 [신편]인 반역의 이야기는 2013년 10월에 일본에서 최초로 개봉되었다.
+
+일반적으로 마법소녀물에서 기대되는 것과는 달리, 3화를 기점으로 하여 펼쳐지는 냉혹한 전개와 이에 따른 등장인물들의 절박한 심정묘사, 콜라주 기법이나 독특한 색감으로 자아내는 그로테스크한 결계 연출 등으로 화제를 모았다.
+
+미디어 믹스로 스마트폰 게임인 마기아 레코드 마법소녀 마도카☆마기카 외전이 있으며, 2019년 TV애니메이션 방영이 결정되었다.&lt;ref&gt;https://anime.magireco.com/&lt;/ref&gt; 
+
+=== TV애니메이션 ===
+
+====스토리====
+====등장인물====
+* '''카나메 마도카'''
+* '''아케미 호무라'''
+* '''토모에 마미'''
+* '''미키 사야카'''
+* '''사쿠라 쿄코'''
+* '''큐베''' (C.V. : 카토 에미리)
+
+====스태프====
+====삽입곡====
+====각화리스트====
+&lt;nowiki&gt;*&lt;/nowiki&gt; 모든 에피소드의 각본은 우로부치 겐이 일괄담당
+
+{| class=&quot;wikitable&quot;
+|+
+!화수
+!서브 타이틀
+!콘티(스토리보드)
+!연출
+!작화감독
+!최초방영일
+|-
+|1화
+|꿈속에서 만났던 것, 같은...
+|
+|
+|
+|
+|-
+|2화
+|그건 무척 기쁠 거라고
+|
+|
+|
+|
+|-
+|3화
+|이제 아무것도 두렵지 않아
+|
+|
+|
+|
+|-
+|4화
+|기적도, 마법도, 있어
+|
+|
+|
+|
+|-
+|5화
+|후회 같은 거, 할 리 없어
+|
+|
+|
+|
+|-
+|6화
+|이런 건 분명 이상해
+|
+|
+|
+|
+|-
+|7화
+|진실한 마음과 마주할 수 있나요?
+|
+|
+|
+|
+|-
+|8화
+|난, 정말 바보
+|
+|
+|
+|
+|-
+|9화
+|그런 거, 내가 용납치 않겠어
+|
+|
+|
+|
+|-
+|10화
+|이제 누구에게도 기대지 않아
+|
+|
+|
+|
+|-
+|11화
+|마지막으로 남은 이정표
+|
+|
+|
+|
+|-
+|12화
+|나의, 최고의 친구
+|
+|
+|
+|
+|}</text>
+ </revision>
+ </page>
+ <page>
+ <title>백합/작품 목록</title>
+ <ns>0</ns>
+ <id>11</id>
+ <revision>
+ <id>3357</id>
+ <parentid>3354</parentid>
+ <timestamp>2018-08-08T02:58:42Z</timestamp>
+ <contributor>
+ <username>Syhn</username>
+ <id>10</id>
+ </contributor>
+ <comment>PSYCHO-PASS 추가 (레즈비언 캐릭터 등장)</comment>
+ <model>wikitext</model>
+ <format>text/x-wiki</format>
+ <text xml:space="preserve" bytes="9100">==등재 기준==
+
+백합 작품, 혹은 여성 동성애를 다루고 있는 퀴어 작품 등 백합으로 해석될 수 있는 모든 매체의 목록이다. 주요 테마나 장르가 백합이 아니거나 원작자가 백합작품이 아니라고 밝힌 경우에도 등재 가능하다. 만약 시리즈물의 일부 회차가 백합적인 해석이 가능한 내용을 담고 있을 경우엔 &lt;code&gt;(해당 시리즈 명)n편&lt;/code&gt;과 같은 식으로 기술한다. 정발되지 않은 작품의 경우에는 원제도 기재하도록 한다. 
+
+&lt;big&gt;등재 가능 예시&lt;/big&gt;
+
+[[쓰레기의 본망]]
+* 작품의 장르가 백합이 아니더라도 등재할 수 있는 대표적인 예시이다.
+* 작중 레즈비언 캐릭터가 등장하며 백합적으로 해석할 수 있는 내용이 있다.
+
+[[너무 외로워서 레즈비언 업소에 간 리포트]]
+* 동성 연애와 같은 직접적인 내용을 포함하지 않거나 가상을 소재로 하지 않아도 퀴어물로서 등재가 가능한 대표적인 예시이다.
+* 작가의 여성애자로서의 삶이나 고찰을 담은은 내용이 있다.
+
+[[후죠백합만화]]
+* 작중에서 두 여성 캐릭터가 맺는 관계가 연애적 관계로 정의되지 않아도 등재할 수 있는 대표적인 예시이다.
+* 백합만화임을 표방하고 있다.
+
+==목록==
+
+===한국 작품===
+====만화====
+* 2년 4월 (민국23)
+* Dandy Butch (새)
+* DNA는 가르쳐주지 않아 (민타로)
+* Fill me up (룬.C)
+* Just right there! (위듀/피칸파이)
+* NINA (팀 도그버그)
+* What Does the Fox Say? (팀 가지)
+* 가면의 정사 (Void)
+* 각인 (Tou/고리)
+* 구두신은 소녀, 운동화신은 소녀 (삵)
+* 그녀와 그녀의 전 남자친구 (신비)
+* 그녀의 그녀 (YUJU)
+* 그녀의 심청 (seri/비완)
+* 그녀의 암캐 (피토)
+* 꽃과 신부 (낯선 사람)
+* 꽃들 속에 숨다 (김계후)
+* 나는 너를 본다　(덤보)
+* 나비소리 (ZZING)
+* 나의 꽃잎을 만져주세요 (Piaroo)
+* 나의 별 (깣)
+* 나의 보람 (피토)
+* 난봉꾼과 왕자님 (랑/박미남)
+* 내 애인은 조폭?! (장조림/모튜)
+* 내 자식의 사생활 (보름)
+* 너와 나의 거리 (ㅁㅣㄱ)
+* 너의 굴레 (NU)
+* 네가 없었으면 좋겠어 (까르보나라)
+* 네루다의 시선 (정지니)
+* 달래야 (춘애)
+* 데빌드롭 (Grey)
+* 데일리 위치 (성원)
+* 도련님의 비밀 (생강)
+* 동거인은 음마 (김통크)
+* 따뜻한 달 (영춘)
+* 랑데부 (햄농)
+* 릴리트 (SIRIUS/체셔)
+* 마녀도시 리린이야기 (레드렌)
+* 마녀마을 페페이야기 (나락갈대)
+* 마이 리틀 코로네 (트리니티툴)
+* 마이너리티 리포트 (간부추)
+* 맨발의 니나 (첨지)
+* 메종 드 메이드 (몬냥/타랑)
+* 모던픽션 A: (양성현/김소담)
+* 모란과 도화의 계절 (안라/고리)
+* 미쳐서 죄송합니다 (CHO)
+* 민감한 섬 (소원)
+* 박제 (미확인비행녀)
+* 백합은 일상 (곰말리)
+* 뱀파이어의 밤 (ES)
+* 버섯 (이한)
+* 벤전스 (아지)
+* 벽장괴물 (뿡)
+* 별사탕 요정의 춤 (뮹/전래동화)
+* 봄빙수 (파노)
+* 봉숭아물 (불곰)
+* 브로큰 릴리 (sage)
+* 블루밍 시퀀스 (이을)
+* 비공식 로맨스 (다옹)
+* 비터스윗콘파냐 (호벤/손개피)
+* 빨간 백합 (네스티캣/Attention plz)
+* 새장의 소녀 (koer)
+* 샤베트 (최경아)
+* 설레는 기분 (쌈바)
+* 세레나데 (금계수)
+* 신의 신부 (이후추)
+* 아모쉬 (하링)
+* 안녕은하세요 (검둥)
+* 어쩌면 흔한 이야기 (솜먼지)
+* 언니의 취향 (장진/콤)
+* 엘릭시르 (P.P/성원)
+* 여고생과 편의점 (닭고기)
+* 여길봐 햄뽀야! (햄농)
+* 여름과 가을 사이 (룽시)
+* 여자친구 (청건)
+* 온 어 리시 (아지)
+* 온초점 (라코)
+* 올해의 미숙 (정원)
+* 왕자님이 되고 싶어!! (카이린)
+* 욕망의 방향 (미확인비행녀)
+* 우렁각시 (해만)
+* 우주의 별 (조구)
+* 월야화원 (강언니/미스피엠)
+* 월화X목금 (쏭루)
+* 율하엔딩 (건치)
+* 이성연애박사 (참새/반숙)
+* 인스턴트 글라스 (가재)
+* 장막의 뒤에서 (다과)
+* 전학생 (5후)
+* 조금씩 점점 (새우튀김)
+* 줄리엣과 줄리엣 (이삭)
+* 지금의 우리는 (뿡)
+* 지나가는 N (캐노피)
+* 처음초 밤야 (YD/Rohhhhh)
+* 천사씨와 악마님 (매우맑음)
+* 청아와 휘민 (섬멍)
+* 커밍아웃 (하먹)
+* 클럽 아모르 (비바)
+* 텍스쳐 플라워 (최미연/박희열)
+* 파워풀 릴리 (coff)
+* 파이 인 더 스카이 (우리두리)
+* 파티션 (팀 티코지)
+* 하얀천사에게 날개는 없다 (가도)
+* 한집 두 살림 (율서)
+* 후죠백합만화 (esquer)
+* 힘을 내요!! 꽃가람 (꽃가람)
+====게임====
+*탐정뎐
+*온더훅
+====영화====
+*아가씨
+*여고괴담 두번째 이야기
+====드라마====
+*대세는 백합
+*경성학교
+
+===일본 작품===
+
+====만화====
+* citrus (사부로 우타)
+* Green. (그린) 오토모 메가네
+* 걸프렌드 (모리나가 밀크)
+* 고바야시네 메이드래곤 (쿨교신자)
+* 교정 뒤에는 천사가 묻혀있다 (코야마 카리코)
+* 그녀와 카메라와 그녀의 계절 (츠키코)
+* 금단이어도 괜찮을지 몰라?! (요시자와 케이)
+* 나는 너를 울리고 싶어 (후미오 아야)
+* 날조트랩 -NTR- (코다마 나오코)
+* 남국에서 ~바다와 당신과 태양과~ (미라)
+* 내 몸이 백합?! (사토루)
+* 내 세계를 구성하는 먼지같은 무언가 (아마노 슈닌타)
+* 내가 모르는 나의 미지 (모모노 모토)
+* 내게 물든 소녀 (미만)
+* 네가 아니면 안 돼 (요시자와 케이)
+* 담도 백경 (시무라 타카코)
+* 둘이서 (오토모 메가네)
+* 레이니 송 (모토 모모노)
+* 론리 울프 론리 쉽 (미즈타니 후카)
+* 맛있는 냄새 (우오즈미 아미)
+* 비밀, 하나 (나카하라 츠바키)
+* 비밀. (오토모 메가네)
+* 빨간 입술 하얀 입김 핑크색 꽃잎 (모리나가 밀크)
+* 사유리네 동생은 천사 (이토 하치)
+* 사이다와 울보 (칸노)
+* 사쿠라 트릭 (타치)
+* 사키 -Saki- (코바야시 리츠)
+* 새내기 자매와 두 사람의 식탁 (히이라기 유타카)
+* 소녀결전 오르기아 (에지마 에리)
+* 소녀제곱 -소녀의 사정- (미만)
+* 속삭임 (타카하시 이케다)
+* 쌍각 관계 (타치)
+* 쓰레기의 본망 (요코야리 멩고)
+* 악마의 리들 (스토리 : 코우가 윤/ 작화 : 미나카타 스나오)
+* 어떤 과학의 초전자포 (스토리 : 카마치 카즈마 / 작화: 후유카와 모토이)
+* 에클레어 (백합 엔솔로지)
+* 여자아이들의 사정 (미야코시 와소우)
+* 여자인데 어떡하지?! (로쿠로 이치)
+* 오빠의 아내와 살고 있습니다 (쿠즈시로)
+* 유루유리 (나모리)
+* 이누가미 양과 네코야마 양 (쿠즈시로)
+* 이름 없는 아스테리즘 (코바야시 키나)
+* 이윽고 네가 된다 (나카타니 니오)
+* 저 아이에게 키스와 흰 백합꽃을 (칸노)
+* 주문은 토끼입니까 (Koi)
+* 주인님과 동물귀 소녀 메루 (이토 하치)
+* 진짜 그녀 (이마무라 요코)
+* 최애가 부도칸에 가 준다면 난 죽어도 좋아(히라오 아우리)
+* 카세상 시리즈 (타카시마 히로미)
+* 카케구루이 (카와모토 호무라)
+* 케이온! (카키후라이)
+* 투룸, G펜, 알람시계 (오사와 야요이)
+* 타치바나관 ToLie앵글 (merryhachi)
+* 팝팀에픽 (오카와 부쿠부)
+* 푸른 꽃 (시무라 타카코)
+* 푸어 푸어 Lips (하야코 고토)
+* 필로소피아 (아마노 슈닌타)
+* 하나와 히나는 방과 후 (모리나가 밀크)
+* 학교생활! (스토리 : 카이호 노리미츠 / 작화 : 치바 사도루)
+* 학원 폴리체 (모리나가 밀크)
+* 합법백합부부 (이토 하치)
+* 해피 슈가 라이프(카기소라 토미야키)
+* 히다마리 스케치 (아오키 우메)
+* 히마와리 씨 (스가노 마나미)
+====애니메이션====
+*Fate/kaleid liner 프리즈마☆이리야
+*달라붙은 별
+*리틀 위치 아카데미아 (Little Witch Academia)
+*마법소녀 마도카☆마기카
+*소녀혁명 우테나
+*울려라! 유포니엄
+*유리쿠마 아라시
+*케모노프렌즈
+*타마코 마켓
+*프린세스 프린서플
+*플립 플래퍼즈
+====게임====
+*BanG Dream!
+*Flowers
+*SeaBed
+*고독에는 백합이 약(孤独に効く百合)
+*그 꽃잎에 입맞춤을
+*리리쿠루
+*백의성 시리즈
+*옥상의 백합령 씨
+*카타하네
+*코토노하 아무리라토
+*쿠키런
+====소설====
+*마리아님이 보고 계셔 (콘노 오유키)
+*아다치와 시마무라(이루마 히토마)
+====백합 전문 매체====
+*코믹 유리히메
+===기타===
+*러브 라이브! School idol project
+*THE iDOLM@STER
+
+===그 외===
+====만화====
+*그들의 이야기 (탄지우)
+*릴리 러브 Lily Love (Ratana Satis)
+*펄스 Pulse (Ratana Satis)
+====게임====
+*Analogue: A Hate Story
+*라이프 이즈 스트레인지
+*버터플라이 수프
+*소녀전선
+====애니메이션====
+*겨울왕국
+*스티븐 유니버스
+*코라의 전설
+====영화====
+*가장 따뜻한 색, 블루
+*캐롤</text>
+ </revision>
+ </page>
+</mediawiki>
+  </script>
+
+  <script>
+    /**
+     * 백합온실 MediaWiki XML 아카이브 뷰어 애플리케이션
+     */
+    (function () {
+      // 애플리케이션 전역 상태
+      const state = {
+        siteInfo: {
+          sitename: '백합온실',
+          dbname: 'yurihouse_mediawiki',
+          generator: 'MediaWiki 1.31.0',
+          namespaces: {}
+        },
+        pages: [],            // 파싱된 전체 페이지 객체 배열
+        pageTitleMap: {},     // 제목(소문자/원본) -> 페이지 인덱스 빠른 조회 맵
+        selectedPageIdx: 0,
+        selectedRevIdx: 0,
+        activeTab: 'rendered', // 'rendered' | 'source' | 'history'
+        searchQuery: '',
+        sortBy: 'default',
+        isCustomFile: false
+      };
+
+      // DOM 요소 캐싱
+      const els = {
+        headerSiteName: document.getElementById('headerSiteName'),
+        headerSiteMeta: document.getElementById('headerSiteMeta'),
+        siteDbName: document.getElementById('siteDbName'),
+        statPageCount: document.getElementById('statPageCount'),
+        statRevCount: document.getElementById('statRevCount'),
+        searchInput: document.getElementById('searchInput'),
+        clearSearchBtn: document.getElementById('clearSearchBtn'),
+        filteredCountLabel: document.getElementById('filteredCountLabel'),
+        sortSelect: document.getElementById('sortSelect'),
+        pageList: document.getElementById('pageList'),
+        pageNamespaceBadge: document.getElementById('pageNamespaceBadge'),
+        pageIdBadge: document.getElementById('pageIdBadge'),
+        redirectBadge: document.getElementById('redirectBadge'),
+        articleTitle: document.getElementById('articleTitle'),
+        revisionSelect: document.getElementById('revisionSelect'),
+        metaContributor: document.getElementById('metaContributor'),
+        metaTimestamp: document.getElementById('metaTimestamp'),
+        metaBytes: document.getElementById('metaBytes'),
+        metaCommentBox: document.getElementById('metaCommentBox'),
+        metaCommentText: document.getElementById('metaCommentText'),
+        tabRevCount: document.getElementById('tabRevCount'),
+        renderedBody: document.getElementById('renderedBody'),
+        rawSourceText: document.getElementById('rawSourceText'),
+        historyList: document.getElementById('historyList'),
+        viewRendered: document.getElementById('viewRendered'),
+        viewSource: document.getElementById('viewSource'),
+        viewHistory: document.getElementById('viewHistory'),
+        xmlFileInput: document.getElementById('xmlFileInput'),
+        resetSampleBtn: document.getElementById('resetSampleBtn'),
+        copySourceBtn: document.getElementById('copySourceBtn'),
+        mobileMenuBtn: document.getElementById('mobileMenuBtn'),
+        sidebar: document.getElementById('sidebar'),
+        sidebarBackdrop: document.getElementById('sidebarBackdrop'),
+        dropZoneSidebar: document.getElementById('dropZoneSidebar'),
+        globalDropOverlay: document.getElementById('globalDropOverlay'),
+        mainScrollArea: document.getElementById('mainScrollArea'),
+        toastBanner: document.getElementById('toastBanner'),
+        toastText: document.getElementById('toastText')
+      };
+
+      let toastTimer = null;
+      function showToast(message) {
+        els.toastText.textContent = message;
+        els.toastBanner.classList.remove('hidden');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          els.toastBanner.classList.add('hidden');
+        }, 3200);
+      }
+
+      /**
+       * ISO 타임스탬프를 읽기 쉬운 한국어 날짜/시간으로 포맷팅
+       */
+      function formatTimestamp(isoStr) {
+        if (!isoStr) return '-';
+        try {
+          const d = new Date(isoStr);
+          if (isNaN(d.getTime())) return isoStr;
+          const yyyy = d.getFullYear();
+          const mm = String(d.getMonth() + 1).padStart(2, '0');
+          const dd = String(d.getDate()).padStart(2, '0');
+          const hh = String(d.getHours()).padStart(2, '0');
+          const min = String(d.getMinutes()).padStart(2, '0');
+          return `${yyyy}.${mm}.${dd} ${hh}:${min}`;
+        } catch (e) {
+          return isoStr;
+        }
+      }
+
+      /**
+       * HTML 특수문자 이스케이프
+       */
+      function escapeHtml(str) {
+        if (!str) return '';
+        return str
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      /**
+       * MediaWiki XML 문자열을 파싱하여 state에 저장
+       */
+      function parseMediaWikiXML(xmlString, isCustom = false) {
+        // 잘린(truncated) XML 파일인 경우를 대비한 기본 복구 시도
+        let cleanXml = xmlString.trim();
+        if (!cleanXml.endsWith('</mediawiki>')) {
+          const lastPageClose = cleanXml.lastIndexOf('</page>');
+          if (lastPageClose !== -1) {
+            cleanXml = cleanXml.slice(0, lastPageClose + 7) + '\n</mediawiki>';
+          }
+        }
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(cleanXml, 'text/xml');
+        const parserError = doc.querySelector('parsererror');
+        if (parserError) {
+          throw new Error('XML 형식이 올바르지 않습니다. 유효한 MediaWiki XML 파일인지 확인해주세요.');
+        }
+
+        // 1. siteinfo 파싱
+        const siteInfoEl = doc.querySelector('siteinfo');
+        const namespaces = {};
+        if (siteInfoEl) {
+          state.siteInfo.sitename = siteInfoEl.querySelector('sitename')?.textContent || 'MediaWiki 아카이브';
+          state.siteInfo.dbname = siteInfoEl.querySelector('dbname')?.textContent || 'wiki_db';
+          state.siteInfo.generator = siteInfoEl.querySelector('generator')?.textContent || 'MediaWiki';
+          siteInfoEl.querySelectorAll('namespaces > namespace').forEach(nsEl => {
+            const key = nsEl.getAttribute('key');
+            namespaces[key] = nsEl.textContent || '일반 문서';
+          });
+        }
+        state.siteInfo.namespaces = namespaces;
+
+        // 2. page 노드 파싱
+        const pageEls = Array.from(doc.querySelectorAll('page'));
+        if (pageEls.length === 0) {
+          throw new Error('XML 파일 내에 <page> 문서 데이터가 없습니다.');
+        }
+
+        const pages = [];
+        const pageTitleMap = {};
+        let totalRevisions = 0;
+
+        pageEls.forEach((pageEl) => {
+          const title = pageEl.querySelector(':scope > title')?.textContent || '(제목 없음)';
+          const ns = pageEl.querySelector(':scope > ns')?.textContent || '0';
+          const id = pageEl.querySelector(':scope > id')?.textContent || '-';
+          const redirectEl = pageEl.querySelector(':scope > redirect');
+          const redirectTarget = redirectEl ? redirectEl.getAttribute('title') : null;
+
+          const revEls = Array.from(pageEl.querySelectorAll(':scope > revision'));
+          const revisions = revEls.map(revEl => {
+            const revId = revEl.querySelector(':scope > id')?.textContent || '-';
+            const timestamp = revEl.querySelector(':scope > timestamp')?.textContent || '';
+            const contribEl = revEl.querySelector(':scope > contributor');
+            const contributor =
+              contribEl?.querySelector('username')?.textContent ||
+              contribEl?.querySelector('ip')?.textContent ||
+              '익명';
+            const comment = revEl.querySelector(':scope > comment')?.textContent || '';
+            const isMinor = !!revEl.querySelector(':scope > minor');
+            const textEl = revEl.querySelector(':scope > text');
+            const text = textEl?.textContent || '';
+            const bytes = textEl?.getAttribute('bytes') || new Blob([text]).size;
+
+            return {
+              id: revId,
+              timestamp,
+              contributor,
+              comment,
+              isMinor,
+              text,
+              bytes
+            };
+          });
+
+          // 시간순 정렬 (과거 -> 최신) 보장
+          revisions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+          totalRevisions += revisions.length;
+
+          const pageObj = {
+            title,
+            ns,
+            id,
+            redirectTarget,
+            revisions
+          };
+
+          const idx = pages.length;
+          pages.push(pageObj);
+          pageTitleMap[title] = idx;
+          pageTitleMap[title.toLowerCase()] = idx;
+        });
+
+        state.pages = pages;
+        state.pageTitleMap = pageTitleMap;
+        state.selectedPageIdx = 0;
+        state.selectedRevIdx = Math.max(0, pages[0].revisions.length - 1);
+        state.isCustomFile = isCustom;
+
+        // UI 상단 및 통계 갱신
+        els.headerSiteName.textContent = state.siteInfo.sitename;
+        els.headerSiteMeta.textContent = `${state.siteInfo.generator} · ${isCustom ? '업로드된 XML 파일' : '내장 아카이브 샘플'}`;
+        els.siteDbName.textContent = state.siteInfo.dbname;
+        els.statPageCount.textContent = pages.length.toLocaleString();
+        els.statRevCount.textContent = totalRevisions.toLocaleString();
+
+        if (isCustom) {
+          els.resetSampleBtn.classList.remove('hidden');
+        } else {
+          els.resetSampleBtn.classList.add('hidden');
+        }
+
+        renderSidebarList();
+        renderCurrentPage();
+      }
+
+      /**
+       * 경량 MediaWiki Wikitext -> HTML 렌더러
+       * 인포박스 틀({{...}}), 위키테이블({| ... |}), 제목(==), 강조('''), 내부/외부 링크, 목록(*), 각주(<ref>) 지원
+       */
+      function renderWikitextToHTML(rawText) {
+        if (!rawText) {
+          return '<p class="text-slate-400 italic">이 판에는 본문 내용이 없습니다.</p>';
+        }
+
+        let text = rawText;
+
+        // 1. HTML 주석 제거 (<!-- ... -->)
+        text = text.replace(/<!--[\s\S]*?-->/g, '');
+
+        // 2. 디스플레이 타이틀 / 분류 태그 처리
+        const categories = [];
+        text = text.replace(/\[\[분류:([^\]]+)\]\]/g, (_, cat) => {
+          categories.push(cat.trim());
+          return '';
+        });
+        text = text.replace(/\{\{DISPLAYTITLE:([^}]+)\}\}/gi, '');
+
+        // 3. 각주(<ref>...</ref>) 추출 및 번호 매핑
+        const footnotes = [];
+        text = text.replace(/<ref[^>]*>([\s\S]*?)<\/ref>/gi, (_, refContent) => {
+          const num = footnotes.length + 1;
+          footnotes.push(refContent.trim());
+          return `%%REF_${num}%%`;
+        });
+        // <references /> 플레이스홀더 표시
+        let hasReferencesTag = false;
+        text = text.replace(/<references\s*\/?>/gi, () => {
+          hasReferencesTag = true;
+          return '%%REFERENCES_BLOCK%%';
+        });
+
+        // 4. 인포박스 템플릿({{틀이름 | 키 = 값 ... }}) 추출
+        const infoboxes = [];
+        text = extractTemplates(text, (tplRaw) => {
+          // 인라인 색상 틀 {{color|#hex|텍스트}} 처리
+          const colorMatch = tplRaw.match(/^\{\{\s*color\s*\|\s*([^|]+)\s*\|\s*([^}]+)\s*\}\}$/i);
+          if (colorMatch) {
+            return `<span style="color:${escapeHtml(colorMatch[1].trim())}">${escapeHtml(colorMatch[2].trim())}</span>`;
+          }
+
+          // 일반 다중 라인 인포박스 틀 처리
+          const inner = tplRaw.slice(2, -2).trim();
+          const lines = inner.split('\n');
+          const tplName = lines[0].split('|')[0].trim();
+          const rows = [];
+
+          // 한 줄에 파이프가 여러 개인 경우도 대응
+          const parts = inner.split('|').slice(1);
+          parts.forEach(part => {
+            const eqIdx = part.indexOf('=');
+            if (eqIdx !== -1) {
+              const k = part.slice(0, eqIdx).trim();
+              const v = part.slice(eqIdx + 1).trim();
+              if (v && !['항목모양', '제목모양', '배경색', '글자색', '테두리색', '로고', '사진', '그림', '이미지'].includes(k)) {
+                rows.push({ key: k, val: v });
+              }
+            }
+          });
+
+          if (rows.length === 0) {
+            return `<span class="inline-block px-2 py-0.5 text-xs rounded bg-greenhouse-50 text-greenhouse-700 border border-greenhouse-200 font-mono">{{${escapeHtml(tplName)}}}</span>`;
+          }
+
+          const boxIdx = infoboxes.length;
+          infoboxes.push({ name: tplName, rows });
+          return `\n%%INFOBOX_${boxIdx}%%\n`;
+        });
+
+        // 5. 위키 테이블({| ... |}) 추출
+        const tables = [];
+        text = text.replace(/\{\|[\s\S]*?\|\}/g, (tableRaw) => {
+          const tblIdx = tables.length;
+          tables.push(parseWikiTable(tableRaw));
+          return `\n%%WIKITABLE_${tblIdx}%%\n`;
+        });
+
+        // 6. 줄 단위 블록 파싱 (제목, 목록, 문단)
+        const lines = text.split('\n');
+        const htmlBlocks = [];
+        let inList = false;
+
+        for (let i = 0; i < lines.length; i++) {
+          let line = lines[i].trim();
+
+          if (!line) {
+            if (inList) {
+              htmlBlocks.push('</ul>');
+              inList = false;
+            }
+            continue;
+          }
+
+          // 플레이스홀더 블록 처리
+          if (/^%%INFOBOX_\d+%%$/.test(line) || /^%%WIKITABLE_\d+%%$/.test(line) || line === '%%REFERENCES_BLOCK%%') {
+            if (inList) {
+              htmlBlocks.push('</ul>');
+              inList = false;
+            }
+            htmlBlocks.push(line);
+            continue;
+          }
+
+          // 제목 헤딩 (====, ===, ==, =)
+          const h4Match = line.match(/^====\s*(.+?)\s*====$/);
+          if (h4Match) {
+            if (inList) { htmlBlocks.push('</ul>'); inList = false; }
+            htmlBlocks.push(`<h4>${formatInline(h4Match[1])}</h4>`);
+            continue;
+          }
+          const h3Match = line.match(/^===\s*(.+?)\s*===$/);
+          if (h3Match) {
+            if (inList) { htmlBlocks.push('</ul>'); inList = false; }
+            htmlBlocks.push(`<h3>${formatInline(h3Match[1])}</h3>`);
+            continue;
+          }
+          const h2Match = line.match(/^==\s*(.+?)\s*==$/);
+          if (h2Match) {
+            if (inList) { htmlBlocks.push('</ul>'); inList = false; }
+            htmlBlocks.push(`<h2>${formatInline(h2Match[1])}</h2>`);
+            continue;
+          }
+          const h1Match = line.match(/^=\s*(.+?)\s*=$/);
+          if (h1Match) {
+            if (inList) { htmlBlocks.push('</ul>'); inList = false; }
+            htmlBlocks.push(`<h1>${formatInline(h1Match[1])}</h1>`);
+            continue;
+          }
+
+          // 글머리 기호 목록 (* ...)
+          if (line.startsWith('*')) {
+            if (!inList) {
+              htmlBlocks.push('<ul>');
+              inList = true;
+            }
+            const itemContent = line.replace(/^\*+\s*/, '');
+            htmlBlocks.push(`<li>${formatInline(itemContent)}</li>`);
+            continue;
+          }
+
+          if (inList) {
+            htmlBlocks.push('</ul>');
+            inList = false;
+          }
+
+          htmlBlocks.push(`<p>${formatInline(line)}</p>`);
+        }
+
+        if (inList) {
+          htmlBlocks.push('</ul>');
+        }
+
+        let finalHtml = htmlBlocks.join('\n');
+
+        // 7. 인포박스 치환
+        finalHtml = finalHtml.replace(/%%INFOBOX_(\d+)%%/g, (_, idxStr) => {
+          const box = infoboxes[Number(idxStr)];
+          const rowsHtml = box.rows.map(r => `
+            <tr class="border-b border-slate-100 last:border-0">
+              <th class="py-2 px-3 text-left text-xs font-semibold text-greenhouse-800 bg-greenhouse-50/70 w-1/3 align-top">${escapeHtml(r.key)}</th>
+              <td class="py-2 px-3 text-xs text-slate-700 align-top">${formatInline(r.val)}</td>
+            </tr>
+          `).join('');
+
+          return `
+            <aside class="my-4 lg:float-right lg:ml-6 lg:mb-4 w-full lg:w-80 rounded-xl border border-greenhouse-200 bg-white shadow-sm overflow-hidden">
+              <div class="bg-greenhouse-700 text-white px-4 py-2.5 text-sm font-bold flex items-center justify-between">
+                <span>${escapeHtml(box.name)}</span>
+                <span class="text-[10px] font-normal bg-greenhouse-800 px-1.5 py-0.5 rounded">정보 틀</span>
+              </div>
+              <table class="w-full border-collapse">
+                <tbody>${rowsHtml}</tbody>
+              </table>
+            </aside>
+          `;
+        });
+
+        // 8. 위키테이블 치환
+        finalHtml = finalHtml.replace(/%%WIKITABLE_(\d+)%%/g, (_, idxStr) => {
+          return tables[Number(idxStr)];
+        });
+
+        // 9. 각주 번호 및 각주 목록 치환
+        finalHtml = finalHtml.replace(/%%REF_(\d+)%%/g, (_, numStr) => {
+          return `<sup class="wiki-ref-sup" onclick="document.getElementById('footnote-${numStr}')?.scrollIntoView({behavior:'smooth'})">[${numStr}]</sup>`;
+        });
+
+        const footnotesHtml = footnotes.length > 0 ? `
+          <div class="mt-8 pt-4 border-t border-slate-200 clear-both">
+            <h4 class="text-sm font-bold text-slate-700 mb-2">각주 및 출처</h4>
+            <ol class="list-decimal pl-5 space-y-1 text-xs text-slate-600">
+              ${footnotes.map((fn, i) => `<li id="footnote-${i + 1}">${formatInline(fn)}</li>`).join('')}
+            </ol>
+          </div>
+        ` : '';
+
+        if (hasReferencesTag) {
+          finalHtml = finalHtml.replace('%%REFERENCES_BLOCK%%', footnotesHtml);
+        } else if (footnotesHtml) {
+          finalHtml += footnotesHtml;
+        }
+
+        // 10. 분류 배지 하단 출력
+        if (categories.length > 0) {
+          const catBadges = categories.map(c =>
+            `<span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-greenhouse-50 text-greenhouse-800 border border-greenhouse-200">분류: ${escapeHtml(c)}</span>`
+          ).join(' ');
+          finalHtml += `
+            <div class="mt-8 pt-4 border-t border-slate-200 flex flex-wrap items-center gap-2 clear-both">
+              ${catBadges}
+            </div>
+          `;
+        }
+
+        return `<div class="flow-root">${finalHtml}</div>`;
+      }
+
+      /**
+       * 중첩 중괄호 템플릿({{ ... }}) 추출기
+       */
+      function extractTemplates(text, replacer) {
+        let result = '';
+        let i = 0;
+        while (i < text.length) {
+          if (text[i] === '{' && text[i + 1] === '{') {
+            let depth = 0;
+            let start = i;
+            let j = i;
+            while (j < text.length) {
+              if (text[j] === '{' && text[j + 1] === '{') {
+                depth++;
+                j += 2;
+              } else if (text[j] === '}' && text[j + 1] === '}') {
+                depth--;
+                j += 2;
+                if (depth === 0) break;
+              } else {
+                j++;
+              }
+            }
+            if (depth === 0) {
+              const tplRaw = text.slice(start, j);
+              result += replacer(tplRaw);
+              i = j;
+              continue;
+            }
+          }
+          result += text[i];
+          i++;
+        }
+        return result;
+      }
+
+      /**
+       * MediaWiki 표({| class="wikitable" ... |})를 HTML 테이블로 변환
+       */
+      function parseWikiTable(rawTable) {
+        const lines = rawTable.split('\n');
+        let html = '<div class="overflow-x-auto clear-both"><table class="wiki-table">';
+        let inRow = false;
+
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (line === '|}') {
+            if (inRow) html += '</tr>';
+            break;
+          }
+          if (line.startsWith('|-')) {
+            if (inRow) html += '</tr>';
+            html += '<tr>';
+            inRow = true;
+            continue;
+          }
+          if (line.startsWith('|+')) {
+            const caption = line.slice(2).trim();
+            if (caption) html += `<caption class="text-xs text-slate-500 mb-1 text-left">${formatInline(caption)}</caption>`;
+            continue;
+          }
+          if (line.startsWith('!')) {
+            if (!inRow) { html += '<tr>'; inRow = true; }
+            const cells = line.slice(1).split('!!');
+            cells.forEach(c => {
+              html += `<th>${formatInline(c.trim())}</th>`;
+            });
+            continue;
+          }
+          if (line.startsWith('|')) {
+            if (!inRow) { html += '<tr>'; inRow = true; }
+            const cells = line.slice(1).split('||');
+            cells.forEach(c => {
+              // 셀 속성(예: style="..." | 내용) 분리
+              const pipeIdx = c.indexOf('|');
+              const content = (pipeIdx !== -1 && !c.slice(0, pipeIdx).includes('['))
+                ? c.slice(pipeIdx + 1)
+                : c;
+              html += `<td>${formatInline(content.trim())}</td>`;
+            });
+          }
+        }
+        html += '</table></div>';
+        return html;
+      }
+
+      /**
+       * 인라인 위키 문법(볼드, 이탤릭, 내부/외부 링크, <br>, <code>) 변환
+       */
+      function formatInline(str) {
+        if (!str) return '';
+
+        // 허용할 기본 HTML 태그 임시 보존 (<br>, <code>, <big>)
+        let s = str
+          .replace(/<br\s*\/?>/gi, '%%BR%%')
+          .replace(/<\/br>/gi, '%%BR%%')
+          .replace(/<code>([\s\S]*?)<\/code>/gi, (_, c) => `%%CODE_START%%${c}%%CODE_END%%`)
+          .replace(/<big>([\s\S]*?)<\/big>/gi, (_, c) => `%%BIG_START%%${c}%%BIG_END%%`);
+
+        // 플레이스홀더(%%REF_1%%, <span style=...>) 보존을 위해 일반 텍스트만 이스케이프
+        s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+        // 임시 태그 복원
+        s = s
+          .replace(/%%BR%%/g, '<br>')
+          .replace(/%%CODE_START%%([\s\S]*?)%%CODE_END%%/g, '<code class="wiki-code">$1</code>')
+          .replace(/%%BIG_START%%([\s\S]*?)%%BIG_END%%/g, '<span class="text-base font-bold text-slate-900">$1</span>')
+          .replace(/&lt;span style="([^"]+)"&gt;([\s\S]*?)&lt;\/span&gt;/g, '<span style="$1">$2</span>');
+
+        // 파일/이미지 링크 [[파일:...|...]]
+        s = s.replace(/\[\[파일:([^\]|]+)(?:\|([^\]]*))?\]\]/g, (_, fileName) => {
+          return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-xs text-slate-600 font-mono">🖼️ ${fileName.trim()}</span>`;
+        });
+
+        // 이중 대괄호 외부 URL 링크 [[https://... 라벨]]
+        s = s.replace(/\[\[(https?:\/\/[^\s\]|]+)\s*(?:\|\s*([^\]]+)|\s+([^\]]+))?\]\]/g, (_, url, label1, label2) => {
+          const label = (label1 || label2 || url).trim();
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="wiki-ext-link">${label} ↗</a>`;
+        });
+
+        // 내부 문서 링크 [[문서명|표시텍스트]] 또는 [[문서명]]
+        s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, target, label) => {
+          const cleanTarget = target.trim();
+          const displayLabel = (label || cleanTarget).trim();
+          const exists = Object.prototype.hasOwnProperty.call(state.pageTitleMap, cleanTarget.toLowerCase());
+          const cls = exists ? 'wiki-link' : 'wiki-link-missing';
+          const titleAttr = exists ? `${cleanTarget} 문서로 이동` : `${cleanTarget} (덤프에 없는 문서)`;
+          return `<a class="${cls}" data-wiki-target="${cleanTarget.replace(/"/g, '&quot;')}" title="${titleAttr}">${displayLabel}</a>`;
+        });
+
+        // 단일 대괄호 외부 링크 [http://... 라벨]
+        s = s.replace(/\[(https?:\/\/[^\s\]]+)(?:\s+([^\]]+))?\]/g, (_, url, label) => {
+          const display = (label || url).trim();
+          return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="wiki-ext-link">${display} ↗</a>`;
+        });
+
+        // 굵게 ('''...''') 및 기울임 (''...'')
+        s = s.replace(/'''([\s\S]+?)'''/g, '<strong class="font-bold text-slate-900">$1</strong>');
+        s = s.replace(/''([\s\S]+?)''/g, '<em class="italic text-slate-700">$1</em>');
+
+        return s;
+      }
+
+      /**
+       * 좌측 사이드바 문서 목록 렌더링
+       */
+      function renderSidebarList() {
+        const q = state.searchQuery.trim().toLowerCase();
+
+        // 필터링
+        let indexedPages = state.pages.map((p, index) => ({ page: p, index }));
+        if (q) {
+          indexedPages = indexedPages.filter(({ page }) => {
+            if (page.title.toLowerCase().includes(q)) return true;
+            const latestRev = page.revisions[page.revisions.length - 1];
+            return latestRev && latestRev.text.toLowerCase().includes(q);
+          });
+        }
+
+        // 정렬
+        if (state.sortBy === 'title') {
+          indexedPages.sort((a, b) => a.page.title.localeCompare(b.page.title, 'ko'));
+        } else if (state.sortBy === 'revisions') {
+          indexedPages.sort((a, b) => b.page.revisions.length - a.page.revisions.length);
+        }
+
+        els.filteredCountLabel.textContent = q
+          ? `검색 결과 ${indexedPages.length}개`
+          : `전체 ${indexedPages.length}개 문서`;
+
+        if (indexedPages.length === 0) {
+          els.pageList.innerHTML = `
+            <div class="text-center py-10 px-4">
+              <p class="text-sm text-slate-500">일치하는 문서가 없습니다.</p>
+            </div>
+          `;
+          return;
+        }
+
+        els.pageList.innerHTML = indexedPages.map(({ page, index }) => {
+          const isSelected = index === state.selectedPageIdx;
+          const revCount = page.revisions.length;
+          const isRedirect = !!page.redirectTarget;
+
+          return `
+            <button
+              type="button"
+              data-page-idx="${index}"
+              class="page-item-btn w-full text-left px-3 py-2.5 rounded-xl flex items-center justify-between gap-2 transition-all ${
+                isSelected
+                  ? 'bg-greenhouse-600 text-white shadow-sm font-semibold'
+                  : 'text-slate-700 hover:bg-greenhouse-50 hover:text-greenhouse-900'
+              }"
+            >
+              <div class="min-w-0 flex items-center gap-2">
+                <span class="text-xs opacity-75 shrink-0">${isRedirect ? '↪' : '📄'}</span>
+                <span class="text-sm truncate">${escapeHtml(page.title)}</span>
+              </div>
+              <span class="shrink-0 text-[11px] px-2 py-0.5 rounded-full font-mono ${
+                isSelected
+                  ? 'bg-greenhouse-700 text-greenhouse-100'
+                  : 'bg-slate-100 text-slate-500'
+              }">
+                ${revCount}판
+              </span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      /**
+       * 현재 선택된 페이지 및 리비전(판) 렌더링
+       */
+      function renderCurrentPage() {
+        const page = state.pages[state.selectedPageIdx];
+        if (!page) return;
+
+        // 리비전 인덱스 보정
+        if (state.selectedRevIdx < 0 || state.selectedRevIdx >= page.revisions.length) {
+          state.selectedRevIdx = Math.max(0, page.revisions.length - 1);
+        }
+
+        const rev = page.revisions[state.selectedRevIdx];
+        const nsName = state.siteInfo.namespaces[page.ns] || `이름공간 ${page.ns}`;
+
+        // 상단 배지 및 제목
+        els.pageNamespaceBadge.textContent = `${nsName} (ns:${page.ns})`;
+        els.pageIdBadge.textContent = `문서 ID: ${page.id}`;
+        els.articleTitle.textContent = page.title;
+        els.tabRevCount.textContent = page.revisions.length;
+
+        if (page.redirectTarget) {
+          els.redirectBadge.classList.remove('hidden');
+          els.redirectBadge.textContent = `넘겨주기 → ${page.redirectTarget}`;
+        } else {
+          els.redirectBadge.classList.add('hidden');
+        }
+
+        // 리비전 드롭다운 옵션 구성 (최신 판이 위로 오도록 역순 표시)
+        const optionsHtml = [];
+        for (let i = page.revisions.length - 1; i >= 0; i--) {
+          const r = page.revisions[i];
+          const isLatest = i === page.revisions.length - 1;
+          const label = `#${r.id} (${formatTimestamp(r.timestamp)}) - ${r.contributor}${isLatest ? ' [최신]' : ''}`;
+          optionsHtml.push(`<option value="${i}" ${i === state.selectedRevIdx ? 'selected' : ''}>${escapeHtml(label)}</option>`);
+        }
+        els.revisionSelect.innerHTML = optionsHtml.join('');
+
+        // 리비전 메타데이터
+        if (rev) {
+          els.metaContributor.innerHTML = `
+            <svg class="w-3.5 h-3.5 text-greenhouse-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <span>${escapeHtml(rev.contributor)}</span>
+          `;
+          els.metaTimestamp.textContent = formatTimestamp(rev.timestamp);
+          els.metaBytes.textContent = `${Number(rev.bytes).toLocaleString()} bytes`;
+
+          if (rev.comment) {
+            els.metaCommentBox.classList.remove('hidden');
+            els.metaCommentText.textContent = rev.comment;
+          } else {
+            els.metaCommentBox.classList.add('hidden');
+          }
+
+          // 본문 렌더링 & 원문 설정
+          if (page.redirectTarget && rev.text.trim().startsWith('#넘겨주기')) {
+            els.renderedBody.innerHTML = `
+              <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5 text-sm text-amber-900">
+                  <span class="text-lg">↪</span>
+                  <span>이 문서는 <strong>${escapeHtml(page.redirectTarget)}</strong> 문서로 넘겨주기 됩니다.</span>
+                </div>
+                <button type="button" data-wiki-target="${escapeHtml(page.redirectTarget)}" class="wiki-link px-3 py-1.5 rounded-lg bg-white border border-amber-300 text-xs font-semibold text-amber-900 hover:bg-amber-100">
+                  대상 문서로 이동
+                </button>
+              </div>
+            `;
+          } else {
+            els.renderedBody.innerHTML = renderWikitextToHTML(rev.text);
+          }
+
+          els.rawSourceText.textContent = rev.text;
+        }
+
+        // 편집 역사 리스트 렌더링 (최신순)
+        const historyItems = [];
+        for (let i = page.revisions.length - 1; i >= 0; i--) {
+          const r = page.revisions[i];
+          const prevBytes = i > 0 ? Number(page.revisions[i - 1].bytes) : 0;
+          const diff = Number(r.bytes) - prevBytes;
+          const diffStr = diff > 0 ? `+${diff}` : `${diff}`;
+          const diffColor = diff > 0 ? 'text-emerald-600' : diff < 0 ? 'text-rose-600' : 'text-slate-400';
+          const isCurrent = i === state.selectedRevIdx;
+
+          historyItems.push(`
+            <div data-rev-idx="${i}" class="history-row cursor-pointer p-3.5 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${
+              isCurrent
+                ? 'bg-greenhouse-50/80 border-greenhouse-400 ring-1 ring-greenhouse-400'
+                : 'bg-white border-slate-200 hover:border-greenhouse-300 hover:bg-slate-50'
+            }">
+              <div class="space-y-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700">판 #${r.id}</span>
+                  <span class="text-xs font-semibold text-slate-800">${formatTimestamp(r.timestamp)}</span>
+                  <span class="text-xs text-greenhouse-700 font-medium">· ${escapeHtml(r.contributor)}</span>
+                  ${r.isMinor ? '<span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-slate-200 text-slate-600">사소한 편집</span>' : ''}
+                  ${i === page.revisions.length - 1 ? '<span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-greenhouse-600 text-white">최신</span>' : ''}
+                </div>
+                <p class="text-xs text-slate-500 truncate">${r.comment ? escapeHtml(r.comment) : '<span class="italic text-slate-400">(편집 요약 없음)</span>'}</p>
+              </div>
+              <div class="flex items-center gap-3 text-xs font-mono shrink-0">
+                <span class="text-slate-600">${Number(r.bytes).toLocaleString()} B</span>
+                <span class="${diffColor} font-semibold">(${diffStr})</span>
+              </div>
+            </div>
+          `);
+        }
+        els.historyList.innerHTML = historyItems.join('');
+
+        // 사이드바 선택 상태 동기화
+        renderSidebarList();
+      }
+
+      /**
+       * 탭 전환 핸들러
+       */
+      function switchTab(tabName) {
+        state.activeTab = tabName;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          const isTarget = btn.dataset.tab === tabName;
+          if (isTarget) {
+            btn.classList.add('bg-white', 'text-greenhouse-700', 'shadow-sm');
+            btn.classList.remove('text-slate-600');
+          } else {
+            btn.classList.remove('bg-white', 'text-greenhouse-700', 'shadow-sm');
+            btn.classList.add('text-slate-600');
+          }
+        });
+
+        els.viewRendered.classList.toggle('hidden', tabName !== 'rendered');
+        els.viewSource.classList.toggle('hidden', tabName !== 'source');
+        els.viewHistory.classList.toggle('hidden', tabName !== 'history');
+      }
+
+      /**
+       * 특정 제목의 내부 위키 문서로 이동
+       */
+      function navigateToWikiTitle(targetTitle) {
+        const idx = state.pageTitleMap[targetTitle.toLowerCase()];
+        if (idx !== undefined) {
+          state.selectedPageIdx = idx;
+          state.selectedRevIdx = Math.max(0, state.pages[idx].revisions.length - 1);
+          switchTab('rendered');
+          renderCurrentPage();
+          els.mainScrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          showToast(`'${targetTitle}' 문서는 현재 XML 덤프에 포함되어 있지 않습니다.`);
+        }
+      }
+
+      /**
+       * 로컬 XML 파일 읽기 처리
+       */
+      function handleFileUpload(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            parseMediaWikiXML(e.target.result, true);
+            switchTab('rendered');
+            showToast(`'${file.name}' 파일을 성공적으로 불러왔습니다. (문서 ${state.pages.length}개)`);
+          } catch (err) {
+            showToast(err.message || 'XML 파일을 읽는 중 오류가 발생했습니다.');
+          }
+        };
+        reader.onerror = () => {
+          showToast('파일을 읽을 수 없습니다.');
+        };
+        reader.readAsText(file, 'UTF-8');
+      }
+
+      // 모바일 사이드바 열기/닫기
+      function toggleMobileSidebar(open) {
+        if (open) {
+          els.sidebar.classList.remove('-translate-x-full');
+          els.sidebarBackdrop.classList.remove('hidden');
+        } else {
+          els.sidebar.classList.add('-translate-x-full');
+          els.sidebarBackdrop.classList.add('hidden');
+        }
+      }
+
+      // 이벤트 리스너 바인딩
+      els.mobileMenuBtn.addEventListener('click', () => toggleMobileSidebar(true));
+      els.sidebarBackdrop.addEventListener('click', () => toggleMobileSidebar(false));
+
+      els.searchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        els.clearSearchBtn.classList.toggle('hidden', !state.searchQuery);
+        renderSidebarList();
+      });
+
+      els.clearSearchBtn.addEventListener('click', () => {
+        state.searchQuery = '';
+        els.searchInput.value = '';
+        els.clearSearchBtn.classList.add('hidden');
+        renderSidebarList();
+      });
+
+      els.sortSelect.addEventListener('change', (e) => {
+        state.sortBy = e.target.value;
+        renderSidebarList();
+      });
+
+      // 문서 목록 클릭 위임
+      els.pageList.addEventListener('click', (e) => {
+        const btn = e.target.closest('.page-item-btn');
+        if (!btn) return;
+        state.selectedPageIdx = Number(btn.dataset.pageIdx);
+        state.selectedRevIdx = Math.max(0, state.pages[state.selectedPageIdx].revisions.length - 1);
+        renderCurrentPage();
+        toggleMobileSidebar(false);
+        els.mainScrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      // 리비전 드롭다운 변경
+      els.revisionSelect.addEventListener('change', (e) => {
+        state.selectedRevIdx = Number(e.target.value);
+        renderCurrentPage();
+      });
+
+      // 탭 버튼 클릭
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+
+      // 본문 내 내부 위키 링크 클릭 위임
+      els.renderedBody.addEventListener('click', (e) => {
+        const link = e.target.closest('[data-wiki-target]');
+        if (!link) return;
+        e.preventDefault();
+        navigateToWikiTitle(link.dataset.wikiTarget);
+      });
+
+      // 역사 목록 행 클릭 시 해당 리비전 열람
+      els.historyList.addEventListener('click', (e) => {
+        const row = e.target.closest('.history-row');
+        if (!row) return;
+        state.selectedRevIdx = Number(row.dataset.revIdx);
+        switchTab('rendered');
+        renderCurrentPage();
+        els.mainScrollArea.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      // 원문 복사 버튼 (iFrame 호환 execCommand 사용)
+      els.copySourceBtn.addEventListener('click', () => {
+        const text = els.rawSourceText.textContent;
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          showToast('위키텍스트 원문이 클립보드에 복사되었습니다.');
+        } catch (err) {
+          showToast('복사에 실패했습니다.');
+        }
+        document.body.removeChild(textarea);
+      });
+
+      // 파일 입력 및 드래그 앤 드롭 이벤트
+      els.xmlFileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+          handleFileUpload(e.target.files[0]);
+          e.target.value = '';
+        }
+      });
+
+      els.dropZoneSidebar.addEventListener('click', () => {
+        els.xmlFileInput.click();
+      });
+
+      let dragCounter = 0;
+      window.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dragCounter++;
+        els.globalDropOverlay.classList.remove('hidden');
+      });
+      window.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter <= 0) {
+          dragCounter = 0;
+          els.globalDropOverlay.classList.add('hidden');
+        }
+      });
+      window.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+      window.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dragCounter = 0;
+        els.globalDropOverlay.classList.add('hidden');
+        if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+          handleFileUpload(e.dataTransfer.files[0]);
+        }
+      });
+
+      // 기본 내장 데이터 복원
+      els.resetSampleBtn.addEventListener('click', () => {
+        loadFallbackData('기본 내장 데이터(백합온실 아카이브)로 복원되었습니다.');
+      });
+
+      // 이스케이프 충돌 없이 안전하게 내장 데이터를 구성하기 위한 JSON 데이터
+      const EMBEDDED_ARCHIVE_DATA = {
+        siteInfo: {
+          sitename: '백합온실',
+          dbname: 'yurihouse_mediawiki',
+          generator: 'MediaWiki 1.31.0',
+          namespaces: {
+            '-2': '미디어',
+            '-1': '특수',
+            '0': '일반 문서',
+            '1': '토론',
+            '2': '사용자',
+            '3': '사용자토론',
+            '4': '백합온실',
+            '5': '백합온실토론',
+            '6': '파일',
+            '7': '파일토론',
+            '8': '미디어위키',
+            '9': '미디어위키토론',
+            '10': '틀',
+            '11': '틀토론',
+            '12': '도움말',
+            '13': '도움말토론',
+            '14': '분류',
+            '15': '분류토론',
+            '828': '모듈',
+            '829': '모듈토론',
+            '2300': '소도구',
+            '2301': '소도구토론',
+            '2302': '소도구정의',
+            '2303': '소도구정의토론',
+            '2600': '주제'
+          }
+        },
+        pages: [
+          {
+            title: 'CANAAN',
+            ns: '0',
+            id: '524',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '4059',
+                timestamp: '2018-11-23T13:02:39Z',
+                contributor: '다비드상',
+                comment: '새 문서: ===개요=== CANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 4...',
+                isMinor: false,
+                bytes: '1318',
+                text: "===개요===\n\nCANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 428 ~ 봉쇄된 시부야에서 ~ 에 등장했던 인물들 중 하나인 '카난'과 '오오사와 마리아'를 중심으로 한 이야기이지만, 독립적으로 보아도 무방하다. \n\n감독은 꽃피는 이로하, 천랑 등 P.A.works에서 활약한 안도 마사히로가 맡았다.\n\n게임 428에서부터 카난 편의 스토리는 나스 키노코가 맡았기에, 애니메이션 CANAAN에서도 그가 원안을 맡았다. 단, 시리즈 구성 및 각본은 오카다 마리. \n\n\n\n===스토리===\n\n새내기 카메라맨 오오사와 마리아는 취재하러 들른 상하이에서 기괴한 사건에 휘말린다. 궁지에서 도와준 사람은 소식이 끊겼던 친구 카난. 그녀는 범죄조직 ‘헤비’의 수령이자 숙적인 알파르트를 뒤쫓고 있었다. 독립된 오감이 동시에 기능하는 ‘공감각'으로 초인적인 전투를 펼치는 카난이지만, 알파르트의 흉계는 차근차근 진행되어가고 있었다….\n\n\n===등장인물===\n\n* 카난\n\n* 알파르트\n\n* 오오사와 마리나\n\n* 량치\n\n* 융융\n\n\n===스태프===\n===삽입곡===\n===각화 리스트==="
+              },
+              {
+                id: '4060',
+                timestamp: '2018-11-23T13:06:33Z',
+                contributor: '다비드상',
+                comment: '/* 스토리 */',
+                isMinor: false,
+                bytes: '1609',
+                text: "===개요===\n\nCANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 428 ~ 봉쇄된 시부야에서 ~ 에 등장했던 인물들 중 하나인 '카난'과 '오오사와 마리아'를 중심으로 한 이야기이지만, 독립적으로 보아도 무방하다. \n\n감독은 꽃피는 이로하, 천랑 등 P.A.works에서 활약한 안도 마사히로가 맡았다.\n\n게임 428에서부터 카난 편의 스토리는 나스 키노코가 맡았기에, 애니메이션 CANAAN에서도 그가 원안을 맡았다. 단, 시리즈 구성 및 각본은 오카다 마리. \n\n===스토리===\n\n새내기 카메라맨 오오사와 마리아는 취재하러 들른 상하이에서 기괴한 사건에 휘말린다. 궁지에서 도와준 사람은 소식이 끊겼던 친구 카난. 그녀는 범죄조직 ‘헤비’의 수령이자 숙적인 알파르트를 뒤쫓고 있었다. 독립된 오감이 동시에 기능하는 ‘공감각'으로 초인적인 전투를 펼치는 카난이지만, 알파르트의 흉계는 차근차근 진행되어가고 있었다….<ref>[http://www.yes24.com/24/goods/6271092 Yes24 소설판 소개에서 발췌] </ref>\n\n===등장인물===\n\n* 카난\n중동계의 소녀. 오감이 동시에 기능하여 초인적인 지각을 발휘하는 공감각 능력을 지니고 있다. 여기서 카난이란, 성경에 나오는 '가나안'과 같은 의미이다.\n\n* 알파르트\n\n* 오오사와 마리나\n\n* 량치\n\n* 융융\n\n===스태프===\n===삽입곡===\n===각화 리스트==="
+              },
+              {
+                id: '4061',
+                timestamp: '2018-11-23T13:16:09Z',
+                contributor: '다비드상',
+                comment: '/* 등장인물 */',
+                isMinor: false,
+                bytes: '2767',
+                text: "===개요===\n\nCANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 428 ~ 봉쇄된 시부야에서 ~ 에 등장했던 인물들 중 하나인 '카난'과 '오오사와 마리아'를 중심으로 한 이야기이지만, 독립적으로 보아도 무방하다. \n\n감독은 꽃피는 이로하, 천랑 등 P.A.works에서 활약한 안도 마사히로가 맡았다.\n\n게임 428에서부터 카난 편의 스토리는 나스 키노코가 맡았기에, 애니메이션 CANAAN에서도 그가 원안을 맡았다. 단, 시리즈 구성 및 각본은 오카다 마리. \n\n===스토리===\n\n새내기 카메라맨 오오사와 마리아는 취재하러 들른 상하이에서 기괴한 사건에 휘말린다. 궁지에서 도와준 사람은 소식이 끊겼던 친구 카난. 그녀는 범죄조직 ‘헤비’의 수령이자 숙적인 알파르트를 뒤쫓고 있었다. 독립된 오감이 동시에 기능하는 ‘공감각'으로 초인적인 전투를 펼치는 카난이지만, 알파르트의 흉계는 차근차근 진행되어가고 있었다….<ref>[http://www.yes24.com/24/goods/6271092 Yes24 소설판 소개에서 발췌] </ref>\n\n===등장인물===\n\n* '''카난''' (CV : 사와시로 미유키) 중동계의 소녀. 범죄조직 '헤비(뱀)'의 대항조직에 소속한 철의 투쟁대행인. 독립하여 있는 오감을 동시에 기능하는 공감각자이며, 그 능력을 사용해 표범과 같이 움직임으로 적을 해치운다. 중동 거리에서 오오사와 마리나와 만나 친구가 되었다. 여기서 카난이란, 성경에 나오는 '가나안'과 같은 의미이다.\n\n* '''알파르트''' (CV : 사카모토 마아야) 범죄조직 '헤비(뱀)'의 실질적 보스이며, 카난과는 숙적 관계. 특징은 왼쪽 어깨에 그려진 뱀문양의 문신. 신체능력은 일반인의 그걸 단숨에 넘어버리며, 전술에 있어서도 조예가 깊다. 또한 경제에 대한 지시도 있어, 링 챠의 주인이기도 하다.\n\n* '''오오사와 마리나''' (CV 난조 요시노) 카난의 친우이며, 삼류 가십지 '헤븐 출판'의 신인 카메라맨. 아직도 필름 카메라를 애용하고 있다. 성격은 좋게 말하면 밝으며 나쁘게 말하면 지나치게 낙천적. \n\n* '''량치''' (CV : 다나카 리에) 범죄조직 '헤비(뱀)' 소속. 알파르트를 숭배하고 있으며, 카난에 대한 강한 적대감을 갖고 있다. 표면적인 직업은 타이다라사의 사장 비서. 평소에도 BB탄을 사용하는 장난 \\감 총기를 휴대하고 다닌다.\n\n* '''융융'''\n\n===스태프===\n===삽입곡===\n===각화 리스트===\n<references />"
+              },
+              {
+                id: '4063',
+                timestamp: '2018-11-23T13:18:06Z',
+                contributor: '다비드상',
+                comment: '/* 등장인물 */',
+                isMinor: true,
+                bytes: '2765',
+                text: "===개요===\n\nCANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 428 ~ 봉쇄된 시부야에서 ~ 에 등장했던 인물들 중 하나인 '카난'과 '오오사와 마리아'를 중심으로 한 이야기이지만, 독립적으로 보아도 무방하다. \n\n감독은 꽃피는 이로하, 천랑 등 P.A.works에서 활약한 안도 마사히로가 맡았다.\n\n게임 428에서부터 카난 편의 스토리는 나스 키노코가 맡았기에, 애니메이션 CANAAN에서도 그가 원안을 맡았다. 단, 시리즈 구성 및 각본은 오카다 마리. \n\n===스토리===\n\n새내기 카메라맨 오오사와 마리아는 취재하러 들른 상하이에서 기괴한 사건에 휘말린다. 궁지에서 도와준 사람은 소식이 끊겼던 친구 카난. 그녀는 범죄조직 ‘헤비’의 수령이자 숙적인 알파르트를 뒤쫓고 있었다. 독립된 오감이 동시에 기능하는 ‘공감각'으로 초인적인 전투를 펼치는 카난이지만, 알파르트의 흉계는 차근차근 진행되어가고 있었다….<ref>[http://www.yes24.com/24/goods/6271092 Yes24 소설판 소개에서 발췌] </ref>\n\n===등장인물===\n\n* '''카난''' (CV : 사와시로 미유키) 중동계의 소녀. 범죄조직 '헤비(뱀)'의 대항조직에 소속한 철의 투쟁대행인. 독립하여 있는 오감을 동시에 기능하는 공감각자이며, 그 능력을 사용해 표범과 같이 움직임으로 적을 해치운다. 중동 거리에서 오오사와 마리나와 만나 친구가 되었다. 여기서 카난이란, 성경에 나오는 '가나안'과 같은 의미이다.\n\n* '''알파르트''' (CV : 사카모토 마아야) 범죄조직 '헤비(뱀)'의 실질적 보스이며, 카난과는 숙적 관계. 특징은 왼쪽 어깨에 그려진 뱀문양의 문신. 신체능력은 일반인의 그걸 단숨에 넘어버리며, 전술에 있어서도 조예가 깊다. 또한 경제에 대한 지시도 있어, 링 챠의 주인이기도 하다.\n\n* '''오오사와 마리나''' (CV 난조 요시노) 카난의 친우이며, 삼류 가십지 '헤븐 출판'의 신인 카메라맨. 아직도 필름 카메라를 애용하고 있다. 성격은 좋게 말하면 밝으며 나쁘게 말하면 지나치게 낙천적. \n\n* '''량치''' (CV : 다나카 리에) 범죄조직 '헤비(뱀)' 소속. 알파르트를 숭배하고 있으며, 카난에 대한 강한 적대감을 갖고 있다. 표면적인 직업은 타이다라사의 사장 비서. 평소에도 BB탄을 사용하는 장난감 총기를 휴대하고 다닌다.\n\n* '''융융'''\n\n===스태프===\n===삽입곡===\n===각화 리스트===\n<references />"
+              },
+              {
+                id: '4064',
+                timestamp: '2018-11-23T13:19:39Z',
+                contributor: '다비드상',
+                comment: '/* 등장인물 */',
+                isMinor: false,
+                bytes: '2821',
+                text: "===개요===\n\nCANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 428 ~ 봉쇄된 시부야에서 ~ 에 등장했던 인물들 중 하나인 '카난'과 '오오사와 마리아'를 중심으로 한 이야기로, 어느 정도는 게임 428의 지식을 알고 있는 것으로 상정하고 진행되기도 한다. \n\n감독은 꽃피는 이로하, 천랑 등 P.A.works에서 활약한 안도 마사히로가 맡았다.\n\n게임 428에서부터 카난 편의 스토리는 나스 키노코가 맡았기에, 애니메이션 CANAAN에서도 그가 원안을 맡았다. 단, 시리즈 구성 및 각본은 오카다 마리. \n\n===스토리===\n\n새내기 카메라맨 오오사와 마리아는 취재하러 들른 상하이에서 기괴한 사건에 휘말린다. 궁지에서 도와준 사람은 소식이 끊겼던 친구 카난. 그녀는 범죄조직 ‘헤비’의 수령이자 숙적인 알파르트를 뒤쫓고 있었다. 독립된 오감이 동시에 기능하는 ‘공감각'으로 초인적인 전투를 펼치는 카난이지만, 알파르트의 흉계는 차근차근 진행되어가고 있었다….<ref>[http://www.yes24.com/24/goods/6271092 Yes24 소설판 소개에서 발췌] </ref>\n\n===등장인물===\n\n* '''카난''' (CV : 사와시로 미유키) 중동계의 소녀. 범죄조직 '헤비(뱀)'의 대항조직에 소속한 철의 투쟁대행인. 독립하여 있는 오감을 동시에 기능하는 공감각자이며, 그 능력을 사용해 표범과 같이 움직임으로 적을 해치운다. 중동 거리에서 오오사와 마리나와 만나 친구가 되었다. 여기서 카난이란, 성경에 나오는 '가나안'과 같은 의미이다.\n\n* '''알파르트''' (CV : 사카모토 마아야) 범죄조직 '헤비(뱀)'의 실질적 보스이며, 카난과는 숙적 관계. 특징은 왼쪽 어깨에 그려진 뱀문양의 문신. 신체능력은 일반인의 그걸 단숨에 넘어버리며, 전술에 있어서도 조예가 깊다. 또한 경제에 대한 지시도 있어, 링 챠의 주인이기도 하다.\n\n* '''오오사와 마리나''' (CV 난조 요시노) 카난의 친우이며, 삼류 가십지 '헤븐 출판'의 신인 카메라맨. 아직도 필름 카메라를 애용하고 있다. 성격은 좋게 말하면 밝으며 나쁘게 말하면 지나치게 낙천적. \n\n* '''량치''' (CV : 다나카 리에) 범죄조직 '헤비(뱀)' 소속. 알파르트를 숭배하고 있으며, 카난에 대한 강한 적대감을 갖고 있다. 표면적인 직업은 타이다라사의 사장 비서. 평소에도 BB탄을 사용하는 장난감 총기를 휴대하고 다닌다.\n\n* '''융융'''\n\n===스태프===\n===삽입곡===\n===각화 리스트===\n<references />"
+              },
+              {
+                id: '4069',
+                timestamp: '2018-11-25T13:35:35Z',
+                contributor: '다비드상',
+                comment: '',
+                isMinor: false,
+                bytes: '4161',
+                text: "{{애니메이션\n|구분 = TV 애니메이션\n|대표장르 = 버디물\n|제목 = CANAAN\n|항목모양 =\n|제목모양 = \n|로고 = \n|사진 = \n|장르 = 버디물, 액션\n|화수 = 13화\n|전작 = 428 ~ 봉쇄된 시부야에서 ~ (비디오 게임)\n|후속작 = \n<!-- 방영 정보: 현지 -->\n|현지국가 = 일본\n|방영일자 = 2009. 7. 4. ~ 2009. 9. 26.\n|최속방송 = \n|주관방송 = Tokyo MX\n|방영시각 = \n|개봉일자 = \n|상영시간 = \n|방영사이트 = \n|공식사이트 = https://www.ponican.jp/canaan/index.html\n<!-- 방영 정보: 한국 -->\n|한국방영일자 = \n|한국최속방송 = \n|한국방영시각 = \n|한국개봉일자 = \n|한국상영시간 = \n|한국방영사이트 = 애니플러스\n|한국공식사이트 = \n<!-- 제작 정보 -->\n|감독 = 안도 마사히로\n|시리즈 구성 = 오카다 마리\n|캐릭터 원안 = 타케우치 타카시\n|음악 = 나나세 히카루\n|제작사 = P. A. Works\n|제작위원회 = Project CANAAN\n<!-- 세부 제작 정보 -->\n|각본 = 오카다 마리\n|연출 = \n|캐릭터 디자인 = 세키구치 카나미\n|미술감독 = 와키 타케시\n|색채설계 = 이노우에 카츠에 \n|촬영감독 = 나미키 사토시\n|음향감독 = 이케타카와 진\n|음악제작 = 나나세 히카루\n|음악 프로듀서 = 사이토 시게루\n|프로듀스 = 이모션\n}}\n===개요===\n\nCANAAN은 P.A.Works에서 제작하여, 2009년 7월부터 9월까지 방영한 13화 분량의 TV애니메이션이다. 본래는 춘 소프트의 어드벤쳐 게임 428 ~ 봉쇄된 시부야에서 ~ 에 등장했던 인물들 중 하나인 '카난'과 '오오사와 마리아'를 중심으로 한 이야기기로, 어느 정도는 게임 428의 지식을 알고 있는 것으로 상정하고 진행되기도 한다. \n\n감독은 꽃피는 이로하, 천랑 등 P.A.works에서 활약한 안도 마사히로가 맡았다.\n\n게임 428에서부터 카난 편의 스토리는 나스 키노코가 맡았기에, 애니메이션 CANAAN에서도 그가 원안을 맡았다. 단, 시리즈 구성 및 각본은 오카다 마리. \n\n===스토리===\n\n새내기 카메라맨 오오사와 마리아는 취재하러 들른 상하이에서 기괴한 사건에 휘말린다. 궁지에서 도와준 사람은 소식이 끊겼던 친구 카난. 그녀는 범죄조직 ‘헤비’의 수령이자 숙적인 알파르트를 뒤쫓고 있었다. 독립된 오감이 동시에 기능하는 ‘공감각'으로 초인적인 전투를 펼치는 카난이지만, 알파르트의 흉계는 차근차근 진행되어가고 있었다….<ref>[http://www.yes24.com/24/goods/6271092 Yes24 소설판 소개에서 발췌] </ref>\n\n===등장인물===\n\n* '''카난''' (CV : 사와시로 미유키) 중동계의 소녀. 범죄조직 '헤비(뱀)'의 대항조직에 소속한 철의 투쟁대행인. 독립하여 있는 오감을 동시에 기능하는 공감각자이며, 그 능력을 사용해 표범과 같이 움직임으로 적을 해치운다. 중동 거리에서 오오사와 마리나와 만나 친구가 되었다. 여기서 카난이란, 성경에 나오는 '가나안'과 같은 의미이다.\n\n* '''알파르트''' (CV : 사카모토 마아야) 범죄조직 '헤비(뱀)'의 실질적 보스이며, 카난과는 숙적 관계. 특징은 왼쪽 어깨에 그려진 뱀문양의 문신. 신체능력은 일반인의 그걸 단숨에 넘어버리며, 전술에 있어서도 조예가 깊다. 또한 경제에 대한 지시도 있어, 링 챠의 주인이기도 하다.\n\n* '''오오사와 마리나''' (CV 난조 요시노) 카난의 친우이며, 삼류 가십지 '헤븐 출판'의 신인 카메라맨. 아직도 필름 카메라를 애용하고 있다. 성격은 좋게 말하면 밝으며 나쁘게 말하면 지나치게 낙천적. \n\n* '''량치''' (CV : 다나카 리에) 범죄조직 '헤비(뱀)' 소속. 알파르트를 숭배하고 있으며, 카난에 대한 강한 적대감을 갖고 있다. 표면적인 직업은 타이다라사의 사장 비서. 평소에도 BB탄을 사용하는 장난감 총기를 휴대하고 다닌다.\n\n* '''융융'''\n\n===스태프===\n===삽입곡===\n===각화 리스트===\n<references />"
+              }
+            ]
+          },
+          {
+            title: 'Ciel ~ The Last Autumn Story ~',
+            ns: '0',
+            id: '525',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '4066',
+                timestamp: '2018-11-23T13:37:51Z',
+                contributor: '다비드상',
+                comment: '항목 개설',
+                isMinor: false,
+                bytes: '916',
+                text: "===개요===\nCiel ~ The Last Autumn Story ~ 는 임주연의 장편만화로, 월간 만화잡지 issue에서 2004년 11월에서 연재를 시작하여 2013년 9월호(단행본 23권)에 완결되었다.\n\n증기기관이 발전한 유럽과 같은 배경이지만, 용과 마수과 존재하며 마법이 존재하는 세계관으로 진행하는 판타지 만화이다. 마법에 대한 설정 중에 특기할만한 것은, 마녀들은 '필드'를 전개하여 마법을 사용하지만 자신의 힘으로는 빠져나오지 못해 이를 보조해줄 파트너 마녀인 '패밀리어'를 필요로 한다는 것이며, 마녀와 패밀리어의 관계는 Ciel 작품 전체의 전개에도 핵심이 되어있다.\n\n===스토리===\n===등장인물===\n\n* 이비엔 마그놀리아\n* 라리에트 킹 다이아몬드\n* 크로히텐\n* 제뉴어리 마이어크로프트 라이트스피어\n* 도터\n* 옥타비아"
+              },
+              {
+                id: '4067',
+                timestamp: '2018-11-25T13:14:10Z',
+                contributor: '다비드상',
+                comment: '',
+                isMinor: false,
+                bytes: '1301',
+                text: "{{만화 정보\n|제목 = Ciel ~ The Last Autumn Story ~\n|사진 = \n|작가 = 임주연\n|출판사 = 대원씨아이\n|출판사국적 = 한국\n|연재처 = Issue\n|연재처국적 = 한국\n|형태 = 잡지 연재\n|대표장르 = 판타지\n|장르 = 판타지, 학원\n|연재시작 = 2004년 11월호\n|연재주기 = 월간\n|한국권수 = 23\n|한국최신발매일 = 2013. 11. 01.\n}}\n\n===개요===\nCiel ~ The Last Autumn Story ~ 는 임주연의 장편만화로, 월간 만화잡지 issue에서 2004년 11월에서 연재를 시작하여 2013년 9월호(단행본 23권)에 완결되었다.\n\n증기기관이 발전한 유럽과 같은 배경이지만, 용과 마수과 존재하며 마법이 존재하는 세계관으로 진행하는 판타지 만화이다. 마법에 대한 설정 중에 특기할만한 것은, 마녀들은 '필드'를 전개하여 마법을 사용하지만 자신의 힘으로는 빠져나오지 못해 이를 보조해줄 파트너 마녀인 '패밀리어'를 필요로 한다는 것이며, 마녀와 패밀리어의 관계는 Ciel 작품 전체의 전개에도 핵심이 되어있다.\n\n===스토리===\n===등장인물===\n\n* 이비엔 마그놀리아\n* 라리에트 킹 다이아몬드\n* 크로히텐\n* 제뉴어리 마이어크로프트 라이트스피어\n* 도터\n* 옥타비아"
+              },
+              {
+                id: '4071',
+                timestamp: '2018-11-25T13:38:15Z',
+                contributor: '다비드상',
+                comment: '/* 등장인물 */',
+                isMinor: false,
+                bytes: '1337',
+                text: "{{만화 정보\n|제목 = Ciel ~ The Last Autumn Story ~\n|사진 = \n|작가 = 임주연\n|출판사 = 대원씨아이\n|출판사국적 = 한국\n|연재처 = Issue\n|연재처국적 = 한국\n|형태 = 잡지 연재\n|대표장르 = 판타지\n|장르 = 판타지, 학원\n|연재시작 = 2004년 11월호\n|연재주기 = 월간\n|한국권수 = 23\n|한국최신발매일 = 2013. 11. 01.\n}}\n\n===개요===\nCiel ~ The Last Autumn Story ~ 는 임주연의 장편만화로, 월간 만화잡지 issue에서 2004년 11월에서 연재를 시작하여 2013년 9월호(단행본 23권)에 완결되었다.\n\n증기기관이 발전한 유럽과 같은 배경이지만, 용과 마수과 존재하며 마법이 존재하는 세계관으로 진행하는 판타지 만화이다. 마법에 대한 설정 중에 특기할만한 것은, 마녀들은 '필드'를 전개하여 마법을 사용하지만 자신의 힘으로는 빠져나오지 못해 이를 보조해줄 파트너 마녀인 '패밀리어'를 필요로 한다는 것이며, 마녀와 패밀리어의 관계는 Ciel 작품 전체의 전개에도 핵심이 되어있다.\n\n===스토리===\n===등장인물===\n\n* '''이비엔 마그놀리아'''\n* '''라리에트 킹 다이아몬드'''\n* '''크로히텐'''\n* '''제뉴어리 마이어크로프트 라이트스피어'''\n* '''도터'''\n* '''옥타비아'''"
+              },
+              {
+                id: '4077',
+                timestamp: '2018-11-25T13:55:51Z',
+                contributor: '다비드상',
+                comment: '/* 스토리 */',
+                isMinor: false,
+                bytes: '1805',
+                text: "{{만화 정보\n|제목 = Ciel ~ The Last Autumn Story ~\n|사진 = \n|작가 = 임주연\n|출판사 = 대원씨아이\n|출판사국적 = 한국\n|연재처 = Issue\n|연재처국적 = 한국\n|형태 = 잡지 연재\n|대표장르 = 판타지\n|장르 = 판타지, 학원\n|연재시작 = 2004년 11월호\n|연재주기 = 월간\n|한국권수 = 23\n|한국최신발매일 = 2013. 11. 01.\n}}\n\n===개요===\nCiel ~ The Last Autumn Story ~ 는 임주연의 장편만화로, 월간 만화잡지 issue에서 2004년 11월에서 연재를 시작하여 2013년 9월호(단행본 23권)에 완결되었다.\n\n증기기관이 발전한 유럽과 같은 배경이지만, 용과 마수과 존재하며 마법이 존재하는 세계관으로 진행하는 판타지 만화이다. 마법에 대한 설정 중에 특기할만한 것은, 마녀들은 '필드'를 전개하여 마법을 사용하지만 자신의 힘으로는 빠져나오지 못해 이를 보조해줄 파트너 마녀인 '패밀리어'를 필요로 한다는 것이며, 마녀와 패밀리어의 관계는 Ciel 작품 전체의 전개에도 핵심이 되어있다.\n\n===스토리===\n최고의 미녀 이비엔은 나고 자란 마을을 떠나 도시 뉴턴의 로우드 마법학교에 입학한다. 그곳에서 마법사 가문의 후계자, 제뉴어리, 아름다운 얼굴에 어울리지 않는 무술 소녀 라리에트, 알 수 없는 과거의 선생 크로히텐 등 개성 있는 친구들을 만나며 마녀로서 성장해가는데…!!<ref>[[https://play.google.com/store/books/details/임주연_씨엘_1권?id=b1XZRySyviAC | 구글북스 씨엘 1권 소개란]]</ref>\n\n===등장인물===\n\n* 이비엔 마그놀리아\n* 라리에트 킹 다이아몬드\n* 크로히텐\n* 제뉴어리 마이어크로프트 라이트스피어\n* 도터\n* 옥타비아"
+              },
+              {
+                id: '4078',
+                timestamp: '2018-11-25T13:56:38Z',
+                contributor: '다비드상',
+                comment: '/* 등장인물 */',
+                isMinor: false,
+                bytes: '1856',
+                text: "{{만화 정보\n|제목 = Ciel ~ The Last Autumn Story ~\n|사진 = \n|작가 = 임주연\n|출판사 = 대원씨아이\n|출판사국적 = 한국\n|연재처 = Issue\n|연재처국적 = 한국\n|형태 = 잡지 연재\n|대표장르 = 판타지\n|장르 = 판타지, 학원\n|연재시작 = 2004년 11월호\n|연재주기 = 월간\n|한국권수 = 23\n|한국최신발매일 = 2013. 11. 01.\n}}\n\n===개요===\nCiel ~ The Last Autumn Story ~ 는 임주연의 장편만화로, 월간 만화잡지 issue에서 2004년 11월에서 연재를 시작하여 2013년 9월호(단행본 23권)에 완결되었다.\n\n증기기관이 발전한 유럽과 같은 배경이지만, 용과 마수과 존재하며 마법이 존재하는 세계관으로 진행하는 판타지 만화이다. 마법에 대한 설정 중에 특기할만한 것은, 마녀들은 '필드'를 전개하여 마법을 사용하지만 자신의 힘으로는 빠져나오지 못해 이를 보조해줄 파트너 마녀인 '패밀리어'를 필요로 한다는 것이며, 마녀와 패밀리어의 관계는 Ciel 작품 전체의 전개에도 핵심이 되어있다.\n\n===스토리===\n최고의 미녀 이비엔은 나고 자란 마을을 떠나 도시 뉴턴의 로우드 마법학교에 입학한다. 그곳에서 마법사 가문의 후계자, 제뉴어리, 아름다운 얼굴에 어울리지 않는 무술 소녀 라리에트, 알 수 없는 과거의 선생 크로히텐 등 개성 있는 친구들을 만나며 마녀로서 성장해가는데…!!<ref>[[https://play.google.com/store/books/details/임주연_씨엘_1권?id=b1XZRySyviAC | 구글북스 씨엘 1권 소개란]]</ref>\n\n===등장인물===\n\n* '''이비엔 마그놀리아'''\n* '''라리에트 킹 다이아몬드'''\n* '''크로히텐'''\n* '''제뉴어리 마이어크로프트 라이트스피어'''\n* '''도터'''\n* '''옥타비아'''\n<references />"
+              }
+            ]
+          },
+          {
+            title: 'Citrus',
+            ns: '0',
+            id: '482',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '3717',
+                timestamp: '2018-08-26T11:56:48Z',
+                contributor: 'Acelaten',
+                comment: '새 문서: {{만화 정보 |제목 = citrus |일본어제목 = |영어제목 = |사진 = citrus1.jpg |사진2 = |사진설명 = |작가 = 사부로우타 |작가원문 = サブロウタ |글...',
+                isMinor: false,
+                bytes: '852',
+                text: "{{만화 정보\n|제목 = citrus\n|일본어제목 = \n|영어제목 = \n|사진 = citrus1.jpg\n|작가 = 사부로우타\n|작가원문 = サブロウタ\n|출판사 = 이치진샤\n|출판사국적 = 일본\n|연재처 = 코믹 유리히메\n|정발 = 레진코믹스\n|영어판 = Seven Seas Entertainment\n|형태 = 월간 연재\n|장르 = 연애, 드라마, 학원\n|배경 = 현대, 고등학교\n|연재시작 = 2013년 1월호\n|연재시작일 = 2012. 11. 17\n|연재종료 = 2018년 10월호\n|연재종료일 = 2018. 8. 18.\n|연재주기 = 월간\n|일본권수 = 9\n|일본최신발매일 = 2018. 3. 13.\n|한국권수 = 7\n|한국최신발매일 = 2018. 2. 14.\n|영어권수 = 8\n|영어최신발매일 = 2018. 8. 28.\n}}"
+              },
+              {
+                id: '4024',
+                timestamp: '2018-11-06T12:08:24Z',
+                contributor: '다비드상',
+                comment: '',
+                isMinor: false,
+                bytes: '1461',
+                text: "===개요===\n\ncitrus는 사부로우타가 코믹 유리히메에 2012년 11월부터 2018년 8월까지 연재했던 만화이다.\n\n미디어 믹스의 일환으로 팟쇼네에서 애니메이션을 제작, 총 12화로 2018년 1월부터 2018년 3월까지 방영하였다.요스가노 소라, 늑대와 향신료, 마왕용자 등의 작품에서 감독을 맡았던 타카하시 타케오가 감독을 맡고, key사 출신의 히사야 나오키가 [[플립 플래퍼즈]]와 마찬가지로 하야시 나오키 명의로 시리즈 구성(Chief Writer)을 맡았다.\n \n\n===만화===\n{{만화 정보\n|제목 = citrus\n|일본어제목 = \n|영어제목 = \n|사진 = citrus_1.jpg\n|작가 = 사부로우타\n|작가원문 = サブロウタ\n|출판사 = 이치진샤\n|출판사국적 = 일본\n|연재처 = 코믹 유리히메\n|연재처국적 =\n|정발 = 레진코믹스\n|영어판 = Seven Seas Entertainment\n|형태 = 잡지 연재\n|대표장르 = 연애\n|장르 = 연애, 드라마, 학원\n|연재시작 = 2013년 1월호\n|연재시작일 = 2012. 11. 17\n|연재종료 = 2018년 10월호\n|연재종료일 = 2018. 8. 18.\n|연재주기 = 월간\n|일본권수 = 9\n|일본최신발매일 = 2018. 3. 13.\n|한국권수 = 7\n|한국최신발매일 = 2018. 2. 14.\n|영어권수 = 8\n|영어최신발매일 = 2018. 8. 28.\n}}\n\n{{DISPLAYTITLE:citrus}}\n\n====스토리====\n====등장인물====\n===애니메이션===\n====스태프====\n====삽입곡====\n====각화 리스트===="
+              }
+            ]
+          },
+          {
+            title: 'GRAVITY RUSH 시리즈',
+            ns: '0',
+            id: '522',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '4032',
+                timestamp: '2018-11-10T12:21:15Z',
+                contributor: '다비드상',
+                comment: '새 문서: ===개요=== Gravity Rush(그래비티 러시) 시리즈는 소니 인터랙티브에서 개발된 액션 어드벤쳐 게임으로, 1편인 『Gravity Rush : 소녀는 하늘로 떨...',
+                isMinor: false,
+                bytes: '4732',
+                text: "===개요===\n\nGravity Rush(그래비티 러시) 시리즈는 소니 인터랙티브에서 개발된 액션 어드벤쳐 게임으로, 1편인 『Gravity Rush : 소녀는 하늘로 떨어졌다』와 2편 『Gravity Rush 2 : 하늘로 떨어진 소녀의 선택』으로 이루어져 있다. 1편은 Vita 독점 타이틀이었으나, 2편의 발매와 함께 PS4로 리마스터되었다. 2편은 PS4독점.\n\n일본판 타이틀은 조금 다르고 부제가 긴 편인데, 1편은 『Gravity Daze ~ 중력적 현기증 상층으로 귀한에 있어 그녀의 내우주에 발생한 섭동』, 2편은 『Gravity Daze ~ 중력적 현기증 완결편 : 상으로 귀환의 끝에서, 그녀의 내우주에 수렴한 선택』이다. \n\n===게임플레이===\n\n제목에 중력이 들어가는 것에서도 알 수 있듯이, 중력의 방향을 자유자재로 바꿀 수 있다는 게 가장 큰 특징이다. 구체적으로 예를 들면 특정한 버튼을 눌러 공중에 부유하거나, 부제처럼 하늘을 향해 떨어지거나 하는 식의 플레이, 혹은 건물 위로 미끄러지는 플레이 등이 가능하다. 또한 Vita나 PS4 컨트롤러의 자이로 기능을 이용하여, 게임 내의 캐릭터 상황과 컨트롤러의 기울기가 서로 연동되어 있다.\n\n이러한 액션을 바탕으로, 공중에 떠있는 도시 헥사빌에서 메인미션을 진행하거나, 마을 사람들로부터 서브 퀘스트를 받아 움직이는 오픈월드 스타일의 게임이다. 다양한 장소에 숨겨진 잼을 모으거나 그런 잼으로 멈춰있던 시설을 복구 시키는 등의 액션도 가능하다. 마을 사람들이 이용하는 모노레일 등의 교통수단을 이용할 수 있으나, 직접 중력을 조작하여 움직이는 것도 가능하다.\n\n부드러운 색감에 툰 렌더링을 이용한 만화나 애니메이션 같은 그래픽도 특징적이다. 컷씬은 이러한 분위기를 잘 살리는 방드데시네(프랑스만화) 스타일로 진행된다. 컷씬 속의 언어는 그래비티 러시 시리즈만의 독자적인 것(인공언어)이다.\n\n2편의 경우에 오픈월드의 크기가 대폭 커졌으며, 전투의 플레이 스타일을 바꿀 수 있거나 육성요소 등으로 선택의 폭이 비교적 넓어졌다. \n\n===스토리===\n\n* Gravity Rsuh 1편\n\n기억을 잃은 소녀 \"캣\"은, 불가사의한 검은 고양이와 만나 \"중력술사\"가 된다. 거대한 원주의 주위를 둘러싼 듯이 세워진 공중도시 \"헥사빌.\" 이 도시는 \"중력풍\"의 위협에 의해, 파괴의 위기에 쳐해있었다. \n\n거주지를 잃고, 방황하는 사람들의 모습도 눈에 뜨이기 시작한 헥사빌의 한 편에서, 도시 사람들로부터 \"캣\"이라고 불리는 소녀가 눈을 뜬다.\n\n\"중력 고양이 더스티\"와 만나 \"중력술사\"가 된 캣은, 폭풍과 함께 나타난 수수께끼의 생물 \"네비\"의 위협으로부터 사람들을 지키고, 폭풍에 \"빼앗긴 마을\"을 탈환하기 위해 분주한다. 또 한명의 중력술사 소녀 \"크로우\"를 선두로 강적들과의 싸움을 겪으며 \"캣\"은 강하게 성장하여, 마침내 마을과 자신을 둘러싼 수수께끼의 핵심에 다가간다...\n\n* Gravity Rush 2편\n\n도네리카 전 시장에 일으킨 신병기 폭주사건에서 부흥이 진행된 공중도시 헥사빌. 이상한 중력파의 흔들림이 관측되어, 중력 공주 캣은 파트너인 중력술사 크로우, 경관 시드와 함께 조사에 착수한다. 이상한 기척을 느낀 캣의 주위를 전례없는 규모의 거대한 중력 폭풍이 습격하여 세 명은 어쩔 수 없이 중력의 소용돌이에 삼켜지고 만다-- \n\n근처의 이차원, 캣은 중력 폭풍에 삼켜진 폐허의 끝에서, 중력광석의 채굴을 생업으로 하는 \"방가\" 취락 집단에 흘러들어갔다. 중력 고양이 더스티와 떨어지고만 캣에게는 아무런 특별한 능력도 없는 노동자로서 가혹한 채굴 작업의 나날을 보낸다. 같이 취락에 표류한 시드와 채굴작업에 걸친 끝에, 이 세계에는 흑충이라 불리는 괴물, 신종의 네비가 모습을 드러내고 절체절명의 위기에 빠진 두 사람이었지만...\n\n===등장인물===\n* 캣\n* 레이븐\n* 시드\n\n===미디어 믹스===\n====애니메이션====\n\n1편과 2편 사이의 이야기를 다룬 Gravity Rush - Overture가 미디어 믹스로 제작되었다. 풀 3D 애니메이션으로, 스튜디오 카라가 제작. 플레이스테이션의 유튜브 채널에서 공개중. [[https://www.youtube.com/watch?v=h-hs9QQXjSo 파트A]], [[https://www.youtube.com/watch?v=HNYnsZ5XgDw 파트B]].\n\n===스태프==="
+              },
+              {
+                id: '4079',
+                timestamp: '2018-11-27T07:42:16Z',
+                contributor: '다비드상',
+                comment: '/* 게임플레이 */',
+                isMinor: false,
+                bytes: '4966',
+                text: "===개요===\n\nGravity Rush(그래비티 러시) 시리즈는 소니 인터랙티브 엔터테인먼트 일본 스튜디오(SIEJ)에서 개발된 액션 어드벤쳐 게임으로, 1편인 『Gravity Rush : 소녀는 하늘로 떨어졌다』와 2편 『Gravity Rush 2 : 하늘로 떨어진 소녀의 선택』으로 이루어져 있다. 1편은 2012년에 발매된 Vita 독점 타이틀이었으나, 2편의 2017년 발매와 함께 PS4로 리마스터되었다. 2편은 PS4독점. 양쪽 모두 한국어 자막을 지원한다.\n\n일본판 타이틀은 조금 다르고 부제가 긴 편인데, 1편은 『Gravity Daze ~ 중력적 현기증 상층으로 귀한에 있어 그녀의 내우주에 발생한 섭동』, 2편은 『Gravity Daze ~ 중력적 현기증 완결편 : 상으로 귀환의 끝에서, 그녀의 내우주에 수렴한 선택』이다. \n\n===게임플레이===\n\n제목에 중력이 들어가는 것에서도 알 수 있듯이, 중력의 방향을 자유자재로 바꿀 수 있다는 게 가장 큰 특징이다. 구체적으로 예를 들면 특정한 버튼을 눌러 공중에 부유하거나, 부제처럼 하늘을 향해 떨어지거나 하는 식의 플레이, 혹은 건물 위로 미끄러지는 플레이 등이 가능하다. 또한 Vita나 PS4 컨트롤러의 자이로 기능을 이용하여, 게임 내의 캐릭터 상황과 컨트롤러의 기울기가 서로 연동되어 있다.\n\n이러한 액션을 바탕으로, 공중 도시 헥사빌에서 메인미션을 진행하거나, 마을 사람들로부터 서브 퀘스트를 받아 움직이는 오픈월드 스타일의 게임이다. 다양한 장소에 숨겨진 화폐 '잼'을 모으거나 그런 '잼'으로 멈춰있던 시설을 복구 시키는 등의 액션도 가능하다. 마을 사람들이 이용하는 모노레일 등의 교통수단을 이용할 수 있으나, 직접 중력을 조작하여 움직이는 것도 가능하다.\n\n부드러운 색감에 툰 렌더링을 이용한 만화나 애니메이션 같은 그래픽도 특징적이다. 컷씬은 이러한 분위기를 잘 살리는 방드데시네(프랑스만화) 스타일로 진행된다. 컷씬 속의 언어는 그래비티 러시 시리즈만의 독자적인 것(인공언어)이다.\n\n2편의 경우에 오픈월드의 크기가 대폭 커졌으며, 전투의 플레이 스타일을 바꿀 수 있거나 육성요소 등으로 선택의 폭이 비교적 넓어졌다.\n\n===스토리===\n\n* '''Gravity Rsuh 1편'''\n\n기억을 잃은 소녀 \"캣\"은, 불가사의한 검은 고양이와 만나 \"중력술사\"가 된다. 거대한 원주의 주위를 둘러싼 듯이 세워진 공중도시 \"헥사빌.\" 이 도시는 \"중력풍\"의 위협에 의해, 파괴의 위기에 쳐해있었다. \n\n거주지를 잃고, 방황하는 사람들의 모습도 눈에 뜨이기 시작한 헥사빌의 한 편에서, 도시 사람들로부터 \"캣\"이라고 불리는 소녀가 눈을 뜬다.\n\n\"중력 고양이 더스티\"와 만나 \"중력술사\"가 된 캣은, 폭풍과 함께 나타난 수수께끼의 생물 \"네비\"의 위협으로부터 사람들을 지키고, 폭풍에 \"빼앗긴 마을\"을 탈환하기 위해 분주한다. 또 한명의 중력술사 소녀 \"크로우\"를 선두로 강적들과의 싸움을 겪으며 \"캣\"은 강하게 성장하여, 마침내 마을과 자신을 둘러싼 수수께끼의 핵심에 다가간다...<ref>https://www.jp.playstation.com/scej/title/gravitydaze/ps4/</ref>\n\n* '''Gravity Rush 2편'''\n\n도네리카 전 시장에 일으킨 신병기 폭주사건에서 부흥이 진행된 공중도시 헥사빌. 이상한 중력파의 흔들림이 관측되어, 중력 공주 캣은 파트너인 중력술사 크로우, 경관 시드와 함께 조사에 착수한다. 이상한 기척을 느낀 캣의 주위를 전례없는 규모의 거대한 중력 폭풍이 습격하여 세 명은 어쩔 수 없이 중력의 소용돌이에 삼켜지고 만다-- \n\n근처의 이차원, 캣은 중력 폭풍에 삼켜진 폐허의 끝에서, 중력광석의 채굴을 생업으로 하는 \"방가\" 취락 집단에 흘러들어갔다. 중력 고양이 더스티와 떨어지고만 캣에게는 아무런 특별한 능력도 없는 노동자로서 가혹한 채굴 작업의 나날을 보낸다. 같이 취락에 표류한 시드와 채굴작업에 걸친 끝에, 이 세계에는 흑충이라 불리는 괴물, 신종의 네비가 모습을 드러내고 절체절명의 위기에 빠진 두 사람이었지만...<ref>https://www.jp.playstation.com/scej/title/gravitydaze/2/</ref>\n\n===등장인물===\n* '''캣'''\n* '''레이븐'''\n* '''시드'''\n\n===미디어 믹스===\n====애니메이션====\n\n1편과 2편 사이의 이야기를 다룬 Gravity Rush - Overture가 미디어 믹스로 제작되었다. 풀 3D 애니메이션으로, 스튜디오 카라가 제작. 플레이스테이션의 [[https://www.youtube.com/watch?v=tFeXtu-3u78 유튜브 채널]]에서 공개중.\n\n===스태프===\n<references />"
+              }
+            ]
+          },
+          {
+            title: 'LITA',
+            ns: '0',
+            id: '372',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '3980',
+                timestamp: '2018-10-27T21:49:50Z',
+                contributor: '다비드상',
+                comment: '한국어 관련 레퍼런스 추가',
+                isMinor: false,
+                bytes: '668',
+                text: "[[파일:KMNZ LITA.jpg|섬네일]]\n이름은 리타라고 읽는다. 유닛 KMNZ에 속해있다.\n\n주식회사 Wright Flyer Live Entertainment에서 프로듀스 중인 버추얼 유튜버. 허스키한 보이스로, 유닛에서 랩을 주로 담당하고 있다. 라디오 1회에서 특기로 한국어를 할 줄 안다고 밝힌 바 있는데, 본인 말에 따르면 표준어가 아니라 \"부산쪽 말\"<ref>[https://www.youtube.com/watch?v=p1GUMij5a00&t=13m50s KMNZ LITA RADIO #1]</ref>이라고.\n\n[https://twitter.com/kmnzlita 트위터] [https://www.youtube.com/channel/UCwuS0uY-Z2Gr_5OV2oFybFA?sub_confirmation=1 유튜브]\n\n[[분류:버츄얼 유튜버]]"
+              }
+            ]
+          },
+          {
+            title: 'LIZ',
+            ns: '0',
+            id: '370',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '3397',
+                timestamp: '2018-08-08T04:44:45Z',
+                contributor: '힣햏힣',
+                comment: '',
+                isMinor: false,
+                bytes: '350',
+                text: "[[분류:버츄얼 유튜버]]\n[[파일:KMNZ LIZ.jpg|섬네일]]\n\n이름은 리즈라고 읽는다. 유닛 KMNZ에 속해있다.\n\n주식회사 Wright Flyer Live Entertainment에서 프로듀스 중인 버추얼 유튜버.\n\n[https://twitter.com/kmnzliz 트위터] [https://www.youtube.com/channel/UCRMpIxnySp7Fy5SbZ8dBv2w?sub_confirmation=1 유튜브]"
+              }
+            ]
+          },
+          {
+            title: 'Last day of spring',
+            ns: '0',
+            id: '538',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '4174',
+                timestamp: '2019-10-16T04:24:58Z',
+                contributor: '사샤나즈',
+                comment: '새 문서: {{게임 정보 | 제목 = last day of spring | 이미지 = | 배경색 = | 글자색 = #F791E8 | 테두리색 = | 설명 = | 1...',
+                isMinor: false,
+                bytes: '1696',
+                text: "{{게임 정보\n| 제목 = last day of spring\n| 이미지 =\n| 배경색 =\n| 글자색 = #F791E8\n| 테두리색 =\n| 설명 =\n| 1인 개발 =\n| 시리즈 =\n| 엔진 = Ren'Py\n| 플랫폼 =\n| 언어 = 독일어, 영어, 인도네시아어, 일본어, 한국어, 포르투갈어 (브라질)\n| 출시 = 2019년 4월 30일\n| 장르 = 비주얼 노벨\n| 모드 = \n| 이용가 등급 = \n| 미디어 = \n| 요구사양 = \n| 운영체제 = Windows, Linux, macOS\n| 입력장치 =\n| 용량 = 약 32 MB\n| 사운드 =\n| 한글패치 =\n| 음성 =\n| 후커코드 =\n| AT코드 =\n| 이전작 = [[one night, hot springs]]\n| 후속작 = \n| 가격 = 무료 (가격 책정 자유)<br>$3 이상 지불할 경우 아트 컬렉션 추가\n| 관련 사이트 = [https://npckc.itch.io/last-day-of-spring]\n| 주석 =\n}}\n\n== 개요 ==\n\n주인공 에리카가 트랜스젠더 여성 친구 하루의 생일 파티를 위해 스파에 가려는 내용의 [[비주얼 노벨]]이다.\n\n== 등장인물 ==\n\n* 나가타 에리카 (永田エリカ) 하루의 친구. 마나미에게 하루의 생일에 대해 전해 듣고 생일 파티를 준비하게 된다.\n\n* 스즈키 하루 (鈴木ハル) 20세 비수술 트랜스젠더 여성이다. 생일을 앞두고 첫 직장에 출근하게 된다. 외출을 좋아하는 편이 아니며, 마나미를 좋아하고 있다.\n\n* 타치바나 마나미 (立花愛美) 하루의 소꿉친구이다. 남자친구가 있다."
+              }
+            ]
+          },
+          {
+            title: 'Life is Strange',
+            ns: '0',
+            id: '532',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '4150',
+                timestamp: '2019-08-25T14:37:42Z',
+                contributor: '다비드상',
+                comment: '/* 게임플레이 */',
+                isMinor: false,
+                bytes: '3534',
+                text: "===개요===\n\nLife Is Strange는 어드벤쳐 장르의 비디오 게임이다. 프랑스 회사인 DONTNOD가 언리얼 3 엔진으로 개발하였으며, 스퀘어 에닉스를 통해 PC, PS3/4, XBOX 360/ONE 등으로 퍼블리시되었다. 에피소드형 판매 방식을 취했으며, 시즌 1은 2015년에 다섯 에피소드로 종료되었다. \n\n시즌 2가 진행중이나 시즌 2는 두 형제의 이야기를 다루고 있기에 본 문서에서는 다루지 않는다.\n\n===게임플레이===\n\nLife is Strange는 직접 캐릭터를 조작하는 3인칭 형식의 그래픽 어드벤쳐이며, 플레이어는 주변인물과 대화와 퍼즐풀이를 이용해 게임을 진행한다. 이 게임은 여기에 더해 시간을 되감는 초능력을 통해, 1) 등장인물의 말을 듣고 시간을 되돌려 관련된 키워드를 획득하거나 2) 특정 장소에 이동한 뒤에 시간을 되돌려 퍼즐을 푸는 등의 플레이를 요구한다. 이 되감기 기능은 리트라이 기능도 겸하고 있어, 플레이어는 실패의 두려움없이 비교적 느긋히 선택할 수 있다. \n\n주인공 \"맥스 클로우필드\"는 사진과에 소속한 학생이라는 설정에 따라, 특정한 장소, 특정한 상황에 따라서 여러가지 사진을 찍어 일기에 갱신하는 것을 수집요소로 삼고 있다. \n\n다섯 에피소드로 나누어서 발매되었으나, 지난 에피소드에서의 선택이 다음 에피소드에서 반영되는 등 각각의 에피소드가 완전히 독립적이지는 않다. 각 에피소드의 플레이시간은 2시간~3시간 정도로, 총 플레이타임은 대략 15시간 정도이다.\n\n===스토리===\n\n블랙웰 고등학교의 사진과에 속한 주인공 \"맥스 클로우필드\"는, 오랜 친구였던 \"클로이 프라이스\"를 구하면서 시간을 되돌릴 수 있는 능력을 깨닫게 된다. 맥스와 클로이 두 콤비는 실종된 학생인 레이첼 엠버를 좇는 조사에 착수하며, 아카디아 만의 어두운 면을 마주하게 된다. 한편, 맥스는 지속적으로 아카디아 만에 커다란 태풍우가 다가오는 환상을 보게 되며, 이 파멸적인 미래를 막을 방도를 알아내야만 한다. <ref> [https://lifeisstrange.square-enix-games.com/en-us/games/life-is-strange/about 공식 홈페이지 소개란 참조]</ref>\n\n주인공 맥스는 시간을 되돌릴 수 있지만 그 능력은 제한적이기에 작품은 대체로 시계열 순서대로 진행된다. 맥스와 클로이의 재회로 시작된 관계의 변화가 메인플롯이지만, 초반에는 케이트 마시의 바이럴 비디오를 둘러싼 문제, 후반에는 레이첼 앰버의 행방불명을 둘러싼 문제가 중점적으로 다루어져 미스터리 장르적인 면모도 존재한다. 이 모든 사건들은 블랙웰 고등학교를 중점으로 하며 그런 점에서 청소년물, 혹은 청춘물의 영역에도 포함된다.\n\n블랙웰 고등학교는 예술 부문에 특화되어 있으며, 그러한 설정을 반영하여 학생들이 대화할 때 다양한 영화, 애니메이션, 가사를 인용하며 삽입곡도 기성곡들을 대거 사용하는 등 대중문화와 친숙한 면모를 보여준다. \n\n\n===등장인물===\n\n*맥스 클로우필드\n*클로이 프라이스\n*레이첼 앰버\n*케이트 마시\n*빅토리아 체이스\n*네이선 프레스코\n*워렌 그레이엄\n*마크 제퍼슨\n*데이비드 매드슨\n*웰슨 교장\n*프랭크 바우어\n<references />"
+              }
+            ]
+          },
+          {
+            title: 'One night, hot springs',
+            ns: '0',
+            id: '367',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '4175',
+                timestamp: '2019-10-16T04:26:25Z',
+                contributor: '사샤나즈',
+                comment: '언어 및 출시일 추가',
+                isMinor: true,
+                bytes: '1992',
+                text: "{{게임 정보\n| 제목 = one night, hot springs\n| 이미지 =\n| 배경색 =\n| 글자색 = #F791E8\n| 테두리색 =\n| 설명 =\n| 1인 개발 =\n| 시리즈 =\n| 엔진 = Ren'Py\n| 플랫폼 =\n| 언어 = 독일어, 영어, 스페인어 (라틴 아메리카), 인도네시아어, 일본어, 한국어, 포르투갈어, 러시아어, 베트남어, 중국어, 중국어 (번체)\n| 출시 = 2018년 2월 27일\n| 장르 = 비주얼 노벨\n| 모드 = \n| 이용가 등급 = \n| 미디어 = \n| 요구사양 = \n| 운영체제 = Windows, Linux, macOS\n| 입력장치 =\n| 용량 = 약 30 MB\n| 사운드 =\n| 한글패치 =\n| 음성 =\n| 후커코드 =\n| AT코드 =\n| 이전작 = \n| 후속작 = [[last day of spring]]\n| 가격 = 무료 (가격 책정 자유)<br>$3 이상 지불할 경우 아트 컬렉션 추가\n| 관련 사이트 = [https://npckc.itch.io/one-night-hot-springs itch.io]\n| 주석 =\n}}\n\n== 개요 ==\n\n트랜스젠더 여성인 하루가 친구들과 함께 온천에 가는 내용의 [[비주얼 노벨]]이다.\n\n[https://itch.io/jam/trans-gal-jam 트랜스 걸 잼] 행사 참여 작품이다.\n\n== 등장인물 ==\n\n* 스즈키 하루 (鈴木ハル) 19세 트랜스젠더 여성이다. 수술하지 않으면 성별을 바꿀 수 없는 일본 정책의 문제로 여전히 법적 성별을 바꾸지 못했으며 법적 이름도 하루토로 남아 있는 상태이다. 남들의 시선이 두려워 아직 온천에 가 본 적이 없다.\n\n* 타치바나 마나미 (立花愛美) 주인공의 소꿉친구. 20세 생일을 맞아 하루를 온천에 초대한다.\n* 나가타 에리카 (永田エリカ) 마나미의 친구로, 온천에서 하루와 처음 만나게 된다. 노란 머리카락은 자연색이라고 한다."
+              }
+            ]
+          },
+          {
+            title: 'PSYCHO-PASS',
+            ns: '0',
+            id: '453',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '3567',
+                timestamp: '2018-08-10T00:05:24Z',
+                contributor: 'Syhn',
+                comment: '새 문서: {{애니메이션 |로고 = |구분 = TV 애니메이션 |장르 = SF, 수사 |제목 = PSYCHO-PASS |제목/원어 = サイコパス |최속방송 = 후지TV |한국최속방송 =...',
+                isMinor: false,
+                bytes: '929',
+                text: "{{애니메이션\n|로고 = \n|구분 = TV 애니메이션\n|장르 = SF, 수사\n|제목 = PSYCHO-PASS\n|제목/원어 = サイコパス\n|최속방송 = 후지TV\n|한국최속방송 = 애니플러스\n|현지국가=일본\n|방영일자 = 2012년 10월 12일 ~ 2013년 3월 22일 (1기)</br>2014년 10월 10일 ~ 2014년 12월 19일 (2기)\n|감독 = 모토히로 카츠유키 (총감독), 시오타니 나오요시 (감독)\n|각본 = 우로부치 겐, 후카미 마코토, 타카하 아야\n|캐릭터 디자인 = 아마노 아키라 (캐릭터 원안), 아사노 쿄지(캐릭터 디자인·총 작화감독\n|음악 = 칸노 유고\n|제작사 = Production I.G\n|화수 = 22화(1기)</br>11화(2기)\n|공식사이트 = http://psycho-pass.com/\n}}\n\n===개요===\n\n===등장인물===\n\n====1기====\n* 츠네모리 아카네:작품의 주인공\n* [[쿠니즈카 야요이]]\n* [[카라노모리 시온]]\n\n====2기====\n* [[시모츠키 미카]]"
+              }
+            ]
+          },
+          {
+            title: 'Roid-로이드-',
+            ns: '0',
+            id: '531',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '4110',
+                timestamp: '2019-03-14T16:39:08Z',
+                contributor: '다비드상',
+                comment: '',
+                isMinor: false,
+                bytes: '1719',
+                text: "{{만화 정보\n|제목 = Roid-로이드-\n|일본어제목 = Roid-ロイド－\n|영어제목 = \n|사진 = \n|작가 = 시로시\n|작가원문 = しろし\n|출판사 = 이치진샤\n|출판사국적 = 일본\n|연재처 = 유리히메 코믹스\n|연재처국적 = 일본\n|정발 = \n|영어판 = \n|형태 = 잡지 연재\n|대표장르 = SF\n|장르 = SF, 히어로물\n|연재시작 = \n|연재시작일 = \n|연재주기 = 월간\n|일본권수 = 2\n|일본최신발매일 = 2019. 1. 18. (완결)\n|한국권수 = \n|한국최신발매일 = \n|영어권수 = \n|영어최신발매일 = \n}}\n\n===개요===\n\nRoid-로이드-는 유리히메 코믹스에서 연재되어, 총 2권으로 완결된 SF백합 만화이다. 스토리의 전개는 근미래의 고등학교의 로봇 연구부를 배경으로 하되, 어느 정도 히어로 물의 요소를 섞어놓았다. 시로시의 깔끔하면서도 인상적인 선의 사용이 돋보인다.\n\n===스토리===\n\n\"사람과 로봇이 공생하는 근미래. 로봇 연구부의 부실에는 휠체어 생활을 보내는 학생 \"후타우에 유이\", 유이가 스스로의 의식을 카피한 안드로이드 \"안나\", 우수한 AI개발자(아키텍트)인 후배 \"이치미야 레나\"가 있다. 레나가 안드로이드에게 습격을 당하는 것을 계기로, 어떤 사건에 휘말린 세 명이, 비일상 속에서 서로의 존재에 대해 묻고있는 이야기\" <ref> 유리히메 코믹스 [https://www.ichijinsha.co.jp/yurihime/title/%e3%81%97%e3%82%8d%e3%81%97/roid-%e3%83%ad%e3%82%a4%e3%83%89/ 소개란]에서 발췌 </ref>\n\n===등장인물===\n\n====로봇 연구부====\n\n*후타우에 유이\n*이치미야 레나\n*안나\n*선배\n\n====경비부====\n<references />"
+              }
+            ]
+          },
+          {
+            title: 'S(문화)',
+            ns: '0',
+            id: '454',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '4023',
+                timestamp: '2018-11-05T12:10:18Z',
+                contributor: '다비드상',
+                comment: '/* 일본 밖의 S문화 */',
+                isMinor: true,
+                bytes: '4862',
+                text: "'''S''' (일어: '''エス''') 혹은 '''클래스 S''' (영어: '''Class S''', 일어: '''クラスS''' / '''S kankei'''<ref>Shamoon, Deborah (1 January 2009). \"The Second Coming of Shôjo\" http://hesomagazine.com/japan/the-second-coming-of-shojo/</ref>)는 20세기 초에 일본에서 사용되던 은어로, 여학생들 사이의 강한 감정적인 유대를 기반으로 한 관계나 그러한 관계를 다룬 일본 소녀만화, 소녀소설의 장르를 말한다. '자매(Sister)'의 머리 글자 S를 가져온 용어로 통용되지만 이 외에도 '소녀(Shoujo)', '아름다움(독어 Schön)', 그리고 '탈출(Escape)'의 약어로서의 의미 또한 가진다.<ref>Robertson, Jeniffer, ''Takarazuka, p.68,'' Citing:\nHattori, Kakō; Uehara, Michikō (1925). ''Atarashii Kotoba no Jibiki [Dictionary of New Words] (in Japanese)''. Tokyo: Jitsugyō no Nihonsha. pp. 83–84.\nabashima, Tadao; Hida, Yoshifumi; Yonekawa, Akihiko (1984). ''Meiji Taishō Shingo Zokugo Jiten [Dictionary of New Words and Colloquialisms in the Meiji and Taishō Periods] (in Japanese).'' Tokyo: Tōkyōdō Shuppan. p. 41. [https://www.worldcat.org/title/meiji-taisho-shingo-zokugo-jiten/oclc/14078498 OCLC 14078498]</ref>\n\n=== 개요 ===\nS는 sister의 머리 글자에서 가져온 은어로, 주로 혈연 관계가 없는 여자끼리나 여교사 등과의 열정적인 관계를 나타낸다. 1910년대에 사용되던 다른 은어인 お目와 おでや를 누르고 일반화되는 데에 성공했다.<ref>『近代日本における女同士の親密な関係』 赤枝香奈子\u3000角川学芸出版 (2011/3/1)ISBN 978-4046532312</ref> 당시 사용되던 은어들은 \"에스\"이외에도 시스(Sister), 오메(おめでたい), 오카친(オカチン,사이좋은 부부를 일컫는 속어), 바우(バウ), 핸드인(ハンドイン) 등이 있었다고 전해진다<ref>稲垣恭子(2007)『女学校と女学生』中公新書p.103</ref>\n\n장르로서의 S는 퀴어, 페미니즘적인 성격을 지닌다. 대체로 여학생들 사이의 강한 감정적 동조와 관계의 특수성, 성장과 동성애에 대한 함류를 짙게 가지고 있으며, 그 시대의 신분 차이에 대한 극복이 갈등의 주된 요인인 경우가 많다. 이 때문에 S 장르는 선배와 후배간의 감정적 유대를 주로 그린다.\n\nS 장르의 특징적 부분 중 하나는 '졸업할 때까지의 동성애'라는 클리셰인데, 이는 20세기 초, 동성애를 이성애와 모성으로 발달해나가는 여성성의 성장 수순의 하나로 보던 대중적 시선이 주류였기 때문이다.<ref>Dollase, Hiromi (2003). \"Early Twentieth Century Japanese Girls' Magazine Stories: Examining Shōjo Voice in ''Hanamonogatari''(Flower Tales)\". ''The Journal of Popular Culture''. '''36''' (4): 724–755. https://doi.org/10.1111/1540-5931.00043</ref> 따라서 해당 장르의 전형성은 졸업이라는 끝이 정해져있는 학교, 학원 내에서의 이별에 대한 비극이 주된 소재로 사용되며, 이는 강박적일 정도로 플라토닉 사랑에 대한 함유에 기대어 있다.\n\n요시야 노부코(吉屋信子)의 '꽃 이야기(花物語)'가 해당 장르의 대표작이라 할 수 있으며, '마리아 님이 보고계셔'는 '꽃 이야기'의 현대적 연장선상에 있는 작품으로 간주되곤 한다.\n\n=== 배경과 역사 ===\n\n=== 일본 밖의 S문화 ===\n''\"그땐 이게 엑스 형제라는 게 있잖아. 그게 굉장히 유행이었어. 그 때 신입생들이 들어오면은 우리 선배들이 동생들 고르느라고 (...) 그래가지고 그게 많이 맺어졌어. 형 동생으로, 그게 애정 발표야 (엑스 동생이 되면 어떻게 되는 거에요?) 뭐 그냥 동생, 둘이서 뭐 먹으러 같이 댕기고 둘이 뭐 하러 같이 댕기지. 그런 게 많이 있었어. 학생이 작으니깐 상급생 하급생이 그런 관계로 많이 있고 (...) 너무 나가는 애들도 간혹 있었지. 서로 너무나들 좋아해가지고 안 떨어질라고. 그래 누구냐 김봉림인가 그 애인하고 그거 아니여. 너무 좋아해도 안 되니까 둘이 철도, 달리는 철도로 뛰어들어 자살했잖아 -- 정여운(가명), 1913년생, 이화여고보 졸업\"''<ref>정미정, 「일제시기 '배운 여성'의 근대교육경험과 정체성에 관한 연구」, 이화여자대학교 여성학 석사논문, 2000, 71~73쪽; 이서, 「언니 저 달 나라로 2 : 1910~1930년대 여성 간의 동반자살과 백합물」, 『퀴어인문잡지 삐라』 2호, 2014, 151쪽에서 재인용. \"1960년대 들어 '에스'는 발음이 변화하여 '엑스'로 통용되었다. 그러나 이 인터뷰에서의 '엑스'는 '에스'의 오기로 보인다.\"(원주, 같은 쪽)</ref>\n\n=== S문화와 페미니즘 ===\n<references />"
+              }
+            ]
+          },
+          {
+            title: '그 꽃잎에 입맞춤을',
+            ns: '0',
+            id: '10',
+            redirectTarget: null,
+            revisions: [
+              {
+                id: '10',
+                timestamp: '2018-07-02T13:35:36Z',
+                contributor: '백합온실>테사츄',
+                comment: '새 문서: ===개요=== "그 꽃잎에 입맞춤을(その花びらにくちづけを)"은 동인 서클 [[후구리야]]에서 만든 [[백합]] [[게임]] 시리즈다. 2012년부터 상업...',
+                isMinor: false,
+                bytes: '5667',
+                text: "===개요===\n\"그 꽃잎에 입맞춤을(その花びらにくちづけを)\"은 동인 서클 [[후구리야]]에서 만든 [[백합]] [[게임]] 시리즈다.\n2012년부터 상업 브랜드로 전환하여 유링유링(ゆりんゆりん), 2014년부터는 성 미카엘 여자학원(聖ミカエル女子学園)에서 발매되었다."
+              },
+              {
+                id: '3347',
+                timestamp: '2018-08-08T01:34:13Z',
+                contributor: '힣햏힣',
+                comment: '',
+                isMinor: false,
+                bytes: '19345',
+                text: "[[파일:소노하나 SD 캐릭터 모음.png|700픽셀]] \n\n그 꽃잎에 입맞춤을<br>\nその花びらにくちづけを<br>\nA Kiss For The Petals<br>\n\n===개요===\n\"그 꽃잎에 입맞춤을\"은 동인 서클 [[후구리야]]에서 만든 [[백합]] [[게임]] 시리즈다.<br>\n2012년부터 상업 브랜드로 전환하여 유링유링(ゆりんゆりん), 2014년부터는 성 미카엘 여자학원(聖ミカエル女子学園)에서 발매되었다.<br>\n\n===시리즈===\n\n====게임====\n{| class=\"wikitable\"\n|-\n! 타이틀 !! 메인 캐릭터 !! 일러스트레이터 !! 시나리오 라이터 !! 발매 브랜드 !! 발매일 !! 비고\n|-\n| 그 꽃잎에 입맞춤을 || 나나미・유우나 || 페코 || 사노 신이치로 || 후구리야 || 2006년 09월 22일 || 후구리야 공식 픽시브에 내용이 일부 공개돼있다. [https://www.pixiv.net/member_illust.php?mode=medium&illust_id=58122128 링크]<br>무인(無印)편이라 불린다.\n|-\n| 그 꽃잎에 입맞춤을 나의 왕자님 || 카에데・사라 || 페코 || 사노 신이치로 || 후구리야 || 2007년 05월 29일 || \n|-\n| 그 꽃잎에 입맞춤을 당신과 손 잡기 || 마이, 레오 || 페코 || 사노 신이치로 || 후구리야 || 2007년 07월 20일 || '당신과 연인연결'로 많이 직역된다.\n비공식 준한글화패치가 있다. [http://blog.naver.com/athelas222/221319298886 링크]\n|-\n| 그 꽃잎에 입맞춤을 사랑스러운 포토그래프 || 카에데・사라 || 페코 || 사노 신이치로 || 후구리야 || 2008년 06월 06일 || \n|-\n| 그 꽃잎에 입맞춤을 당신을 좋아하는 행복 || 마이・레오 || 페코 || 사노 신이치로 || 후구리야 || 2008년 08월 01일 || \n|-\n| 그 꽃잎에 입맞춤을 입술과 키스로 속삭이며 || 나나미・유우나 || 페코 || 사노 신이치로 || 후구리야 || 2008년 12월 11일 || \n|-\n| 그 꽃잎에 입맞춤을 달콤하고 원해서 녹아내리는 츄 || 타카코・루나 || 페코 || 사노 신이치로 || 후구리야 || 2009년 12월 11일 || 후구리야 공식 홈페이지에 내용이 일부 공개돼있다. 게임 본편과 약간 내용이 다르다. [http://fuguriya.sakura.ne.jp/index2.html 링크]\n|-\n| 그 꽃잎에 입맞춤을 천사의 꽃잎에 물든 색 || 시즈쿠・에리스 || 페코 || 사노 신이치로 || 후구리야 || 2010년 02월 12일 || \n|-\n| 그 꽃잎에 입맞춤을 하나히랏! || 카오리・아마네, 코하루・마코토 || 페코 || 사노 신이치로 || 후구리야 || 2010년 09월 24일 || 전연령판으로 제작된 '하나히랏!' 시리즈다.\n|-\n| 그 꽃잎에 입맞춤을 달콤하고 어른의 녹아내리는 츄 || 타카코・루나 || 페코 || 사노 신이치로 || 후구리야 || 2010년 12월 03일 || \n|-\n| 그 꽃잎에 입맞춤을 릴리 플래티넘 || 시즈쿠・에리스 || 페코 || JUN || 후구리야 || 2011년 11월 19일 || \n|-\n| 그 꽃잎에 입맞춤을 미카엘의 소녀들 || 리사・미야, 나나미・유우나, 카에데・사라, 마이・레오. 타카코・루나, 시즈쿠・에리스 || 페코 || JUN || 유링유링 || 2012년 11월 30일 || [http://moeapp.net/special/hanamika.html 전연령 어플리케이션판]으로도 발매되었다. 영문판이 스팀에 올라갔었으나 현재는 사정에 의해 내려가있다. 영문판은 망가게이머 사이트에서 구매 가능하다.\n|-\n| 그 꽃잎에 입맞춤을 아틀리에의 연인들 || 리사・미야 || 페코 || JUN || 유링유링 || 2013년 03월 29일 || \n|-\n| 그 꽃잎에 입맞춤을 천사의 동경|| 링고・치아키 || 아이다 타카노부 || 마도카 마도카 || 유링유링 || 2013년 5월 31일 || 아이다 타카노부와 마도카 마도카의 첫 시리즈. 로고가 푸르기 때문에 '청문자(青文字)' 시리즈라고 불린다.<br>비공식 한글화패치가 존재한다. [https://drive.google.com/drive/folders/0B_hY4ZEqq5Pya0JVNWNKeDlnUGM 링크]\n|-\n| 그 꽃잎에 입맞춤을 천사들의 춘연 || 유우노・사츠키 || 아이다 타카노부 || 마도카 마도카 || 유링유링 || 2013년 8월 30일 || 비공식 한글화패치가 존재한다. [https://drive.google.com/drive/folders/0B_hY4ZEqq5Pya0JVNWNKeDlnUGM 링크]\n|-\n| 그 꽃잎에 입맞춤을 백설의 기사 || 릿카・사유키, 리사・미야, 나나미・유우나, 카에데・사라, 마이・레오. 타카코・루나, 시즈쿠・에리스 || 페코 || JUN || 유링유링 || 2013년 12월 20일 || 타카코・루나, 시즈쿠・에리스 루트는 빠져있다.\n|-\n| 그 꽃잎에 입맞춤을 천사들의 약속|| 나루미・아키라 || 아이다 타카노부 || 마도카 마도카 || 유링유링 || 2014년 3월 28일 || \n|-\n| 그 꽃잎에 입맞춤을 당신에게 맹세하는 사랑 || 시즈쿠・에리스 || 페코 || JUN, 히요시 히요리 || 후구리야 || 2014년 05월 24일 || '백설의 기사'의 팬디스크 게임.\n|-\n| 그 꽃잎에 입맞춤을 만났을 무렵의 추억에 || 리사・미야 || 페코 || JUN, 히요시 히요리 || 성 미카엘 여자학원 || 2015년 3월 13일 || 전연령.\n[http://mikajyo.pink/product/memories/ 어플리케이션판]으로 먼저 발매된 후, 스팀에서 영문판 PC버전이 발매되었다. 스팀판에 대응하는 비공식 한글화패치가 존재한다. [https://drive.google.com/drive/folders/0B_hY4ZEqq5Pya0JVNWNKeDlnUGM 링크]\n|-\n| 그 꽃잎에 입맞춤을 뉴제네!|| 하즈키・마나미, 아야・아이, 리나・나기사 || 아이다 타카노부 || 마도카 마도카 || 성 미카엘 여자학원 || 2015년 06월 26일 || 적문자(赤文字), 청문자(青文字)에 이은 새로운 시리즈. 시리즈의 첫 게임 타이틀과 동일하게 '뉴제네!'시리즈라고 부르고 있다.<br>영문판에 대응하는 비공식 한글화패치가 존재한다. [https://drive.google.com/drive/folders/0B_hY4ZEqq5Pya0JVNWNKeDlnUGM 링크]\n|-\n| 그 꽃잎에 입맞춤을 유리링 || 리사・미야, 마이・레오, 릿카・사유키, 사츠키 || 페코, 아이다 타카노부 || JUN, 히요시 히요리 || 후구리야 || 2015년 11월 21일 || 전연령판.\n|-\n| 그 꽃잎에 입맞춤을 레볼루션! 리나기사 || 리나・나기사 || 아이다 타카노부 || JUN, 히요시 히요리 || 후구리야 || 2015년 12월 25일 || 하즈마나, 아야아이 커플링도 조연으로 출연하며, 릿카・사유키도 등장한다. 토자와 마키라는 새로운 캐릭터가 등장하기도 한다.\n|-\n| 그 꽃잎에 입맞춤을 처음 만난 그 날부터 || 리사・미야 || 페코 || JUN, 히요시 히요리 || 성 미카엘 여자학원 || 2016년 10월 28일 || '만났을 무렵의 추억에'의 마스터판이다. 기존 내용에 19금 신이 추가되었다.\n|}\n\n====드라마CD====\n\n{| class=\"wikitable\"\n|-\n! 타이틀 !! 메인 커플링\n|-\n| 그 꽃잎에 입맞춤을 쭉 행복한 키스 || 나나미・유우나\n|-\n| 그 꽃잎에 입맞춤을 카에데쨩 슈퍼 모드 || 카에데・사라\n|-\n| 그 꽃잎에 입맞춤을 쭉 함께인 여름 || 마이・레오\n|-\n| 그 꽃잎에 입맞춤을 꿈 같은 나날 || 나나미・유우나\n|-\n| 그 꽃잎에 입맞춤을 출근 아내 다이어리 || 마이・레오\n|-\n| 그 꽃잎에 입맞춤을 카에데쨩의 새댁 쿠킹 || 카에데・사라\n|-\n| 그 꽃잎에 입맞춤을 레오의 어리광 포상 데이즈 || 마이・레오\n|-\n| 그 꽃잎에 입맞춤을 알콩달콩 봄방학 || 리사・미야\n|-\n| 그 꽃잎에 입맞춤을 리사의 골든 바캉스 || 리사・미야\n|-\n| 그 꽃잎에 입맞춤을 흑발의 연인 || 마이・레오\n|-\n| 그 꽃잎에 입맞춤을 두 사람의 캠퍼스 라이프 || 시즈쿠・에리스\n|-\n| 그 꽃잎에 입맞춤을 수국의 계절 || 링고・치아키\n|-\n| 그 꽃잎에 입맞춤을 영화같은 두 사람의 아침 || 리사・미야\n|-\n| 그 꽃잎에 입맞춤을 새끼고양이 같은 연인 || 릿카・사유키\n|-\n| 그 꽃잎에 입맞춤을 그것은 마치 오랜 꿈 || 유우노・사츠키\n|-\n| 그 꽃잎에 입맞춤을 아침까지, 쭉 || 시즈쿠・에리스\n|-\n| 그 꽃잎에 입맞춤을 귀여운 나의 연인 || 타카코・루나\n|-\n| 그 꽃잎에 입맞춤을 3일 늦은 크리스마스 || 마이・레오\n|-\n| 그 꽃잎에 입맞춤을 천사들의 연인데이트 || 나루미・아키라\n|-\n| 그 꽃잎에 입맞춤을 나의 멋진 연인 || 릿카・사유키\n|-\n| 그 꽃잎에 입맞춤을 행복☆디저트 || 아야・아이\n|-\n| 그 꽃잎에 입맞춤을 응석꾸러기 공주와 눈의 왕자님 || 카에데・사라\n|-\n| 그 꽃잎에 입맞춤을 행복이 찾아오는 키스 || 나기사・리나\n|-\n| 그 꽃잎에 입맞춤을 사랑의 기억을 한번 더 || 리사・미야\n|-\n| 그 꽃잎에 입맞춤을 처음 하는 화해 || 마이・레오\n|}\n\n====픽시브 연재소설====\n\n미카엘의 악역 영애\n~백합 게임의 악역 영애가 되었지만… 오히려 더욱 백합을 보고 싶어!~\n\n[https://www.pixiv.net/novel/show.php?id=8755333 링크]\n\n줄거리\n29살 백합 오타쿠 OL이었던 '나'는 어째선지 갑자기 '그꽃잎'의 세계… 심지어 미카녀생으로 환생했다?!\n\n\"아아?! 유우나 님에, 마이 씨… 저기엔 카에데쨩도♡\"\n\n동경하던 캐릭터를 만나 흥분한 '나'지만…\n그런 자신의 모습이 \"그꽃잎\"의 최신작,\n\"두 사람의 에트랑제\"에 나오는 캐릭터인 '이나토리 클라라'라는 것을 깨닫는다.\n\n그래… 클라라는 주인공과 히로인을 괴롭히다가 마지막에는 미카녀에서 쫓겨나는… 악역 영애였는데?!\n\n===캐릭터===\n====적문자====\n오다 나나미<br>\n마츠바라 유우나<br>\n키타지마 카에데<br>\n키타지마 사라<br>\n사와구치 마이<br>\n카와무라 레오<br>\n스미노에 타카코<br>\n호라이센 루나<br>\n호라이센 레나<br>\n아즈미 리사<br>\n아야세 미야<br>\n시노자키 릿카<br>\n시라카와 사유키<br>\n\n====하나히랏!====\n하네무라 카오리<br>\n유우키 아마네<br>\n우오즈미 코하루<br>\n토도 마코토<br>\n\n====청문자====\n아이하라 링고<br>\n타카오 치아키<br>\n카타쿠라 유우노<br>\n이시가미 사츠키<br>\n히카와 나루미<br>\n이나토리 아키라\n\n====뉴제네!====\n오노하라 하즈키<br>\n스오우 마나미<br>\n키미시마 아야<br>\n키미시마 아이<br>\n타카하타 리나<br>\n미사와 나기사\n\n===공식 사이트 일람===\n[http://fuguriya.sakura.ne.jp/ 후구리야]<br>\n[http://masterup.net/yurinyurin/main.html 유링유링]<br>\n[http://mikajyo.pink/ 성 미카엘 여자학원]<br>\n[https://www.pixiv.net/member.php?id=17394070 후구리야 공식 픽시브]<br>\n[https://twitter.com/fuguriya1 후구리야 공식 트위터 계정]<br>\n[https://twitter.com/yurinyurin_soft 유링유링 공식 트위터 계정]<br>\n[https://twitter.com/mikajyo_info 성 미카엘 여자학원 공식 트위터 계정]<br>\n[http://mangagamer.org/sonohana/ 망가게이머 The A Kiss for the Petals 사이트]\n<references />"
+              }
+            ]
+          }
+        ]
+      };
+
+      function applyArchiveData(data, sourceLabel, isCustom = false) {
+        const namespaces = data.siteInfo?.namespaces || {};
+        const rawPages = Array.isArray(data.pages) ? data.pages : [];
+        if (rawPages.length === 0) {
+          throw new Error('표시할 문서 데이터가 없습니다.');
+        }
+
+        const pages = [];
+        const pageTitleMap = {};
+        let totalRevisions = 0;
+
+        rawPages.forEach((p) => {
+          const title = p.title || '(제목 없음)';
+          const ns = String(p.ns ?? '0');
+          const id = String(p.id ?? '-');
+          const redirectTarget = p.redirectTarget || null;
+          const revs = Array.isArray(p.revisions) ? p.revisions.map(r => ({
+            id: String(r.id ?? '-'),
+            timestamp: r.timestamp || '',
+            contributor: r.contributor || '익명',
+            comment: r.comment || '',
+            isMinor: Boolean(r.isMinor),
+            text: r.text ?? '',
+            bytes: r.bytes ?? new Blob([r.text ?? '']).size
+          })) : [];
+
+          revs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+          totalRevisions += revs.length;
+
+          const idx = pages.length;
+          pages.push({
+            title,
+            ns,
+            id,
+            redirectTarget,
+            revisions: revs
+          });
+          pageTitleMap[title] = idx;
+          pageTitleMap[title.toLowerCase()] = idx;
+        });
+
+        state.siteInfo = {
+          sitename: data.siteInfo?.sitename || '백합온실',
+          dbname: data.siteInfo?.dbname || 'yurihouse_mediawiki',
+          generator: data.siteInfo?.generator || 'MediaWiki 1.31.0',
+          namespaces
+        };
+        state.pages = pages;
+        state.pageTitleMap = pageTitleMap;
+        state.selectedPageIdx = 0;
+        state.selectedRevIdx = Math.max(0, pages[0].revisions.length - 1);
+        state.isCustomFile = isCustom;
+
+        els.headerSiteName.textContent = state.siteInfo.sitename;
+        els.headerSiteMeta.textContent = `${state.siteInfo.generator} · ${sourceLabel}`;
+        els.siteDbName.textContent = state.siteInfo.dbname;
+        els.statPageCount.textContent = pages.length.toLocaleString();
+        els.statRevCount.textContent = totalRevisions.toLocaleString();
+
+        if (isCustom) {
+          els.resetSampleBtn.classList.remove('hidden');
+        } else {
+          els.resetSampleBtn.classList.add('hidden');
+        }
+
+        renderSidebarList();
+        renderCurrentPage();
+      }
+
+      function loadFallbackData(toastMessage) {
+        applyArchiveData(EMBEDDED_ARCHIVE_DATA, '내장 아카이브 데이터', false);
+        switchTab('rendered');
+        if (toastMessage) {
+          showToast(toastMessage);
+        }
+      }
+
+      function parseAndApplyXMLString(xmlString, sourceLabel, isCustom = false) {
+        let cleanXml = (xmlString || '').trim();
+        if (!cleanXml) {
+          throw new Error('XML 내용이 비어 있습니다.');
+        }
+        if (!cleanXml.endsWith('</mediawiki>')) {
+          const lastPageClose = cleanXml.lastIndexOf('</page>');
+          if (lastPageClose !== -1) {
+            cleanXml = cleanXml.slice(0, lastPageClose + 7) + '\n</mediawiki>';
+          }
+        }
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(cleanXml, 'text/xml');
+        if (doc.querySelector('parsererror')) {
+          throw new Error('XML 형식이 올바르지 않습니다.');
+        }
+
+        const siteInfoEl = doc.querySelector('siteinfo');
+        const namespaces = {};
+        if (siteInfoEl) {
+          siteInfoEl.querySelectorAll('namespaces > namespace').forEach(nsEl => {
+            const key = nsEl.getAttribute('key');
+            namespaces[key] = nsEl.textContent || '일반 문서';
+          });
+        }
+
+        const pageEls = Array.from(doc.querySelectorAll('page'));
+        if (pageEls.length === 0) {
+          throw new Error('XML 파일 내에 <page> 데이터가 없습니다.');
+        }
+
+        const pages = pageEls.map((pageEl) => {
+          const title = pageEl.querySelector(':scope > title')?.textContent || '(제목 없음)';
+          const ns = pageEl.querySelector(':scope > ns')?.textContent || '0';
+          const id = pageEl.querySelector(':scope > id')?.textContent || '-';
+          const redirectEl = pageEl.querySelector(':scope > redirect');
+          const redirectTarget = redirectEl ? redirectEl.getAttribute('title') : null;
+
+          const revisions = Array.from(pageEl.querySelectorAll(':scope > revision')).map(revEl => {
+            const revId = revEl.querySelector(':scope > id')?.textContent || '-';
+            const timestamp = revEl.querySelector(':scope > timestamp')?.textContent || '';
+            const contribEl = revEl.querySelector(':scope > contributor');
+            const contributor =
+              contribEl?.querySelector('username')?.textContent ||
+              contribEl?.querySelector('ip')?.textContent ||
+              '익명';
+            const comment = revEl.querySelector(':scope > comment')?.textContent || '';
+            const isMinor = Boolean(revEl.querySelector(':scope > minor'));
+            const textEl = revEl.querySelector(':scope > text');
+            const text = textEl?.textContent || '';
+            const bytes = textEl?.getAttribute('bytes') || new Blob([text]).size;
+
+            return { id: revId, timestamp, contributor, comment, isMinor, text, bytes };
+          });
+
+          return { title, ns, id, redirectTarget, revisions };
+        });
+
+        applyArchiveData({
+          siteInfo: {
+            sitename: siteInfoEl?.querySelector('sitename')?.textContent || '백합온실',
+            dbname: siteInfoEl?.querySelector('dbname')?.textContent || 'yurihouse_mediawiki',
+            generator: siteInfoEl?.querySelector('generator')?.textContent || 'MediaWiki 1.31.0',
+            namespaces
+          },
+          pages
+        }, sourceLabel, isCustom);
+      }
+
+      // 기존 handleFileUpload가 새 파서를 사용하도록 보완
+      const origHandleFileUpload = handleFileUpload;
+      handleFileUpload = function (file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            parseAndApplyXMLString(e.target.result, `업로드 파일: ${file.name}`, true);
+            switchTab('rendered');
+            showToast(`'${file.name}' 파일을 불러왔습니다. (문서 ${state.pages.length}개)`);
+          } catch (err) {
+            showToast(err.message || 'XML 파일을 읽는 중 오류가 발생했습니다.');
+          }
+        };
+        reader.onerror = () => showToast('파일을 읽을 수 없습니다.');
+        reader.readAsText(file, 'UTF-8');
+      };
+
+      // 초기 실행: 같은 폴더의 ./document.xml 자동 로드 시도 후 실패 시 내장 데이터 표시
+      window.addEventListener('DOMContentLoaded', async () => {
+        try {
+          const res = await fetch('./document.xml', { cache: 'no-store' });
+          if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+          }
+          const xmlText = await res.text();
+          parseAndApplyXMLString(xmlText, '외부 document.xml 자동 로드', true);
+          showToast('같은 폴더의 document.xml을 자동으로 불러왔습니다.');
+        } catch (_err) {
+          loadFallbackData();
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
